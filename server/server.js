@@ -8,8 +8,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware för att hanter JSON
+// Middleware för att hanter JSON och CORS
 app.use(express.json());
+app.use((req, res, next) => {
+   res.header("Access-Control-Allow-Origin", "*");
+   res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+   );
+   next();
+});
 
 // Route för att hämta produkter från WooCommerce API
 
