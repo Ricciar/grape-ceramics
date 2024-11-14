@@ -103,6 +103,7 @@ app.get("/api/products/:id", async (req, res) => {
          description: stripHtml(product.description),
          price: product.price,
          sale_price: product.sale_price,
+         stock_quantity: product.stock_quantity,
          stock_status: product.stock_status,
       };
 
