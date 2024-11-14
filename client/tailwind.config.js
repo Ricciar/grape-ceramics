@@ -1,11 +1,15 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+// tailwind.config.js
+module.exports = {
    content: [
-      "./index.html", // Om du har en index.html-fil
-      "./src/**/*.{js,ts,jsx,tsx}", // För alla JS, TS, JSX, TSX-filer i src-mappen
+      "./index.html",
+      "./src/**/*.{js,ts,jsx,tsx}", // Inkluderar alla filtyper där Tailwind kan användas
    ],
    theme: {
-      extend: {},
+      extend: {
+         fontFamily: {
+            sans: ["Rubik", "sans-serif"],
+         },
+      },
    },
    plugins: [],
 };
