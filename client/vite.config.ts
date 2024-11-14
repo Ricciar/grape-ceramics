@@ -14,5 +14,12 @@ export default defineConfig({
    },
    server: {
       port: 3000, // Specificerar porten för dev-servern om du vill köra den på något annat än 5173
+      proxy: {
+         "/api": {
+            target: "http://localhost:5000", // Backend-serverns URL
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api/, "/api"),
+         },
+      },
    },
 });
