@@ -9,6 +9,12 @@ module.exports = {
          fontFamily: {
             sans: ["Rubik", "sans-serif"],
          },
+         colors: {
+            "custom-gray": "#272727", // För knappens ram, text, och hover-bakgrund
+         },
+         letterSpacing: {
+            "custom-wide": "3.04px", // Skapar en ny klass för letter-spacing
+         },
       },
    },
    plugins: [],
