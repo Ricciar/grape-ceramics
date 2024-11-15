@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Button from "../components/Button";
+import useCart from "../components/Cart/UseCart";
 
 // Typ för props
 interface ProductPageDetailProps {
@@ -21,6 +22,7 @@ interface Product {
 
 const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
    const [product, setProduct] = useState<Product | null>(null);
+   const { addToCart } = useCart(); // useCart-hooken för att komma åt addToCart
    const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
    useEffect(() => {
@@ -41,6 +43,24 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
 
    const handleImageClick = (index: number) => {
       setCurrentImageIndex(index);
+   };
+
+   const handleAddToCart = () => {
+      if (product) {
+         console.log("Adding to cart:", product.name);
+         addToCart(
+            {
+               id: product.id,
+               name: product.name,
+               price: product.price,
+               imageUrl: product.images[0] || "",
+               quantity: 1,
+               description: product.description,
+            },
+            1 // Detta är quantityChange
+         );
+         console.log("Product added to cart:", product.name);
+      }
    };
 
    return (
@@ -123,7 +143,7 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
                <Button
                   text="LÄGG I VARUKORG"
                   className="w-[292px] h-[55px]"
-                  onClick={() => console.log("Lägg i varukorg klickad")}
+                  onClick={handleAddToCart}
                />
             ) : (
                <Button
