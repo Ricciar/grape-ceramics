@@ -1,14 +1,23 @@
 import "./App.css";
 import { CartProvider } from "./components/Cart/CartContext";
-import ProductPageDetail from "./pages/ProductPageDetail";
 import Navbar from "./components/Navbar/Navbar";
+import ProductPageDetail from "./pages/ProductPageDetail";
+import ShopGrid from "./pages/ShopGrid";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
    return (
       <CartProvider>
-         <Navbar />
-         <ProductPageDetail productId={80} />
-         {/* Andra komponenter i appen som ska kunna komma åt varukorgen */}
+         <Router>
+            <Navbar />
+            <Routes>
+               {/* Route för produktlistan */}
+               <Route path="/" element={<ShopGrid />} />
+
+               {/* Route för produktsidan, med dynamisk produkt-ID */}
+               <Route path="/product/:id" element={<ProductPageDetail />} />
+            </Routes>
+         </Router>
       </CartProvider>
    );
 }
