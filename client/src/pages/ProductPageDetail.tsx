@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/Button";
 import useCart from "../components/Cart/UseCart";
-
-// Typ för props
-interface ProductPageDetailProps {
-   productId: number;
-}
 
 // Typ för produktdata som hämtas från API:t
 interface Product {
@@ -14,13 +10,15 @@ interface Product {
    name: string;
    images: string[]; // Array av bild-URL:er
    description: string;
+   regular_price: string | null;
+   sale_price: string | null;
    price: string;
-   sale_price: string;
    stock_quantity: string;
    stock_status: string;
 }
 
-const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
+const ProductPageDetail: React.FC = () => {
+   const { id } = useParams<{ id: string }>(); // Hämta ID från URL
    const [product, setProduct] = useState<Product | null>(null);
    const { addToCart } = useCart(); // useCart-hooken för att komma åt addToCart
    const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
@@ -28,7 +26,7 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
    useEffect(() => {
       const fetchProduct = async () => {
          try {
-            const response = await axios.get(`/api/products/${productId}`);
+            const response = await axios.get(`/api/products/${id}`); // Använd id från useParams
             console.log("Fetched product:", response.data);
             setProduct(response.data);
          } catch (error) {
@@ -37,7 +35,7 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
       };
 
       fetchProduct();
-   }, [productId]);
+   }, [id]);
 
    if (!product) return <p>Loading...</p>;
 
@@ -64,10 +62,10 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
    };
 
    return (
-      <div className="flex flex-col items-center mx-auto min-w-[319px] max-w-md p-[1px] pt-0">
+      <div className="flex flex-col items-center mx-auto min-w-[319px] max-w-md pl-[1px] pr-[1px] pt-0">
          {/* Produktbild */}
          <div
-            className="relative w-full h-[497px] overflow-hidden"
+            className="relative w-full h-[450px] overflow-hidden"
             style={{ marginLeft: "1px", marginRight: "1px" }}>
             <img
                src={product.images[currentImageIndex]}
@@ -77,11 +75,11 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
          </div>
 
          {/* Bildgalleri */}
-         <div className="flex mt-[1px] self-start ml-[1px] mr-[1px] space-x-1">
+         <div className="flex mt-[1px] self-start space-x-[1px]">
             {product.images.map((image, index) => (
                <div
                   key={index}
-                  className="relative w-16 h-16 cursor-pointer"
+                  className="relative w-11 h-11 cursor-pointer"
                   onClick={() => handleImageClick(index)}>
                   <img
                      src={image}
@@ -98,16 +96,16 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
          </div>
 
          {/* Produktnamn och beskrivning */}
-         <div className="flex flex-col items-center w-full max-w-[290px]">
+         <div className="flex flex-col items-center w-full max-w-[290px] font-light tracking-[2.85px]">
             <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
                {product.name}
             </h1>
             <p className="text-[16px] mt-[5px] whitespace-pre-line">
-               {product.description}
+               {product.description || "Ingen beskrivning tillgänglig."}
             </p>
 
             {/* Pris och lagerstatus */}
-            <div className="w-full h-[65px] flex justify-between mt-4">
+            <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
                {/* Lagerstatus - Vänsterjusterad */}
                <div className="flex items-center">
                   {product.stock_status === "instock" ? (
@@ -115,9 +113,9 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
                         I lager {product.stock_quantity}st
                      </span>
                   ) : (
-                     <div className="flex self-end items-center">
+                     <div className="flex self-end items-center justify-center">
                         <span className="">Slut i lager</span>
-                        <span className="ml-2 w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full"></span>
                      </div>
                   )}
                </div>
@@ -126,10 +124,11 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
                <div className="text-right">
                   {product.sale_price ? (
                      <>
-                        <span className="block text-[16px]">
-                           {product.sale_price} SEK
+                        <span className="text-sm line-through text-gray-400">
+                           {product.regular_price} SEK
                         </span>
-                        <span className="block line-through text-[12px] text-gray-500">
+                        <br />
+                        <span className="text-sm ml-2">
                            {product.price} SEK
                         </span>
                      </>
@@ -138,16 +137,17 @@ const ProductPageDetail: React.FC<ProductPageDetailProps> = ({ productId }) => {
                   )}
                </div>
             </div>
-            {/* Knapp för "ORDERFÖRFRÅGAN" eller "LÄGG I VARUKORG" */}
+            {/* Knapp för "LÄGG I VARUKORG"eller "ORDERFÖRFRÅGAN" */}
             {product.stock_status === "instock" ? (
                <Button
                   text="LÄGG I VARUKORG"
-                  className="w-[292px] h-[55px]"
+                  className="w-[292px] h-[55px] mb-5"
                   onClick={handleAddToCart}
                />
             ) : (
                <Button
                   text="ORDERFÖRFRÅGAN"
+                  className="w-[292px] h-[55px] mb-5"
                   onClick={() => console.log("Orderförfrågan klickad")}
                />
             )}
