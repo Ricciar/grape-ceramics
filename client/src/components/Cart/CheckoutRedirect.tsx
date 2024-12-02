@@ -4,7 +4,8 @@ import axios from "axios";
 import { CartItem } from "../Navbar/CartIcon";
 
 interface CheckoutRedirectProps {
-   cart: CartItem[];
+   cart: CartItem[]; // Varukorgen
+   checkoutUrl: string; // Url till kassan
 }
 
 const CheckoutRedirect: React.FC<CheckoutRedirectProps> = ({ cart }) => {
