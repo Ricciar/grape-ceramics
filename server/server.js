@@ -14,6 +14,7 @@ if (
    !process.env.WOOCOMMERCE_CONSUMER_SECRET
 ) {
    console.error("Warning: Some required environment variables are not set.");
+   process.exit(1);
 }
 
 const app = express();
@@ -67,8 +68,9 @@ app.get("/api/products", async (req, res) => {
          name: product.name,
          images: product.images.map((image) => image.src), // Array med bild-URL:er
          description: stripHtml(product.description),
-         price: product.price,
+         regular_price: product.regular_price,
          sale_price: product.sale_price,
+         price: product.price,
          stock_status: product.stock_status,
       }));
 
@@ -99,10 +101,11 @@ app.get("/api/products/:id", async (req, res) => {
       const productData = {
          id: product.id,
          name: product.name,
-         images: product.images.map((image) => image.src), // Array med bild-URL:er
+         images: product.images.map((image) => image.src),
          description: stripHtml(product.description),
-         price: product.price,
+         regular_price: product.regular_price,
          sale_price: product.sale_price,
+         price: product.price,
          stock_quantity: product.stock_quantity,
          stock_status: product.stock_status,
       };
@@ -111,6 +114,90 @@ app.get("/api/products/:id", async (req, res) => {
    } catch (error) {
       console.error("Error fetching product:", error);
       res.status(500).json({ message: "Error fetching product" });
+   }
+});
+
+// Route för att skapa en order
+app.post("/api/orders", async (req, res) => {
+   const { cart, billing, shipping } = req.body;
+
+   try {
+      // Validera varukorgen
+      if (!cart || cart.length === 0) {
+         return res.status(400).json({ message: "Cart is empty or invalid" });
+      }
+
+      // Formatera line_items baserat på varukorgsinnehåll
+      const lineItems = cart.map((item) => ({
+         product_id: item.id,
+         quantity: item.quantity,
+      }));
+
+      // Standard billing/shipping data (om inget skickas)
+      const defaultBilling = {
+         first_name: "Placeholder",
+         last_name: "Customer",
+         address_1: "123 Main St",
+         city: "Stockholm",
+         state: "Stockholm",
+         postcode: "12345",
+         country: "SE",
+         email: "placeholder@example.com",
+         phone: "0701234567",
+      };
+
+      // Skapa orderdata
+      const orderData = {
+         payment_method: "woocommerce_payments",
+         payment_method_title: "Credit Card / Debit Card",
+         set_paid: false,
+         billing: billing || defaultBilling,
+         shipping: shipping || billing || defaultBilling,
+         line_items: lineItems,
+      };
+
+      // Logga orderdata som skickas till WooCommerce
+      console.log(
+         "Order data sent to WooCommerce:",
+         JSON.stringify(orderData, null, 2)
+      );
+
+      // Skicka orderdata till WooCommerce
+      const response = await axios.post(
+         `${process.env.WOOCOMMERCE_API_URL}orders`,
+         orderData,
+         {
+            auth: {
+               username: process.env.WOOCOMMERCE_CONSUMER_KEY,
+               password: process.env.WOOCOMMERCE_CONSUMER_SECRET,
+            },
+         }
+      );
+      // Få order och generera betalningslänk
+      const order = response.data;
+      const checkoutUrl = `${process.env.WOOCOMMERCE_STORE_URL}checkout/order-pay/${order.id}/?key=${order.order_key}`;
+      // console.log(
+      //    "WooCommerce Response:",
+      //    JSON.stringify(response.data, null, 2)
+      // );
+
+      console.log(
+         "WooCommerce Response:",
+         JSON.stringify(response.data, null, 2)
+      );
+      console.log("Generated Checkout URL:", checkoutUrl);
+
+      // Returnera order och betalningslänk till frontend
+      res.status(201).json({ order: response.data, checkoutUrl });
+   } catch (error) {
+      console.error(
+         "Error creating order:",
+         error.response?.data || error.message
+      );
+      res.status(error.response?.status || 500).json({
+         message: "Error creating order",
+         error: error.response?.data || "Unknown error",
+      });
    }
 });
 
