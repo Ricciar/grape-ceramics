@@ -4,7 +4,7 @@ import axios from "axios";
 import Button from "../components/Button";
 import useCart from "../components/Cart/UseCart";
 
-// Typ för produktdata som hämtas från API:t
+// Typ för produktdata som hämtas från API:et
 interface Product {
    id: number;
    name: string;
@@ -17,35 +17,99 @@ interface Product {
    stock_status: string;
 }
 
+// Props för bildgalleriet
+interface ImageGalleryProps {
+   images: string[];
+   currentIndex: number;
+   onImageClick: (index: number) => void;
+}
+
+const ProductSkeleton: React.FC = () => (
+   <div className="animate-pulse flex flex-col items-center mx-auto min-w-[319px] max-w-md pl-[1px] pr-[1px] pt-0">
+      {/* Huvudbild skeleton */}
+      <div className="w-full h-[450px] bg-gray-200" />
+
+      {/* Miniatyrbilder skeleton */}
+      <div className="flex mt-1 self-start space-x-1">
+         {[1, 2, 3].map((i) => (
+            <div key={i} className="w-11 h-11 bg-gray-200" />
+         ))}
+      </div>
+
+      {/* Produktinfo skeleton */}
+      <div className="flex flex-col items-center w-full max-w-[290px] mt-5">
+         {/* Titel skeleton */}
+         <div className="w-3/4 h-6 bg-gray-200 mb-4" />
+
+         {/* Beskrivning skeleton */}
+         <div className="w-full h-20 bg-gray-200" />
+
+         {/* Pris och lager skeleton */}
+         <div className="w-full h-[65px] flex justify-between mt-4">
+            <div className="w-1/3 h-4 bg-gray-200" />
+            <div className="w-1/4 h-4 bg-gray-200" />
+         </div>
+
+         {/* Knapp skeleton */}
+         <div className="w-[292px] h-[55px] bg-gray-200 mt-4 mb-5" />
+      </div>
+   </div>
+);
+
+// Bildgalleri-komponent
+const ImageGallery: React.FC<ImageGalleryProps> = ({
+   images,
+   currentIndex,
+   onImageClick,
+}) => (
+   <div className="flex mt-1 self-start space-x-1 overflow-x-auto">
+      {images.map((image, index) => (
+         <div
+            key={index}
+            className="relative min-w-[44px] h-11 cursor-pointer"
+            onClick={() => onImageClick(index)}>
+            <img
+               src={image}
+               alt={`Miniatyrbild ${index + 1}`}
+               className="w-full h-full object-cover"
+               loading="lazy"
+            />
+            {currentIndex === index && (
+               <div className="absolute inset-0 bg-white opacity-50" />
+            )}
+         </div>
+      ))}
+   </div>
+);
+
 const ProductPageDetail: React.FC = () => {
    const { id } = useParams<{ id: string }>(); // Hämta ID från URL
    const [product, setProduct] = useState<Product | null>(null);
-   const { addToCart } = useCart(); // useCart-hooken för att komma åt addToCart
-   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+   const [loading, setLoading] = useState(true);
+   const { addToCart } = useCart(); // Använd useCart-hooken för att komma åt addToCart
+   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
    useEffect(() => {
       const fetchProduct = async () => {
          try {
-            const response = await axios.get(`/api/products/${id}`); // Använd id från useParams
-            console.log("Fetched product:", response.data);
+            setLoading(true);
+            const response = await axios.get(`/api/products/${id}`);
             setProduct(response.data);
          } catch (error) {
-            console.error("Error fetching product:", error);
+            console.error("Fel vid hämtning av produkt:", error);
+         } finally {
+            setLoading(false);
          }
       };
 
-      fetchProduct();
+      if (id) {
+         fetchProduct();
+      }
    }, [id]);
 
-   if (!product) return <p>Loading...</p>;
-
-   const handleImageClick = (index: number) => {
-      setCurrentImageIndex(index);
-   };
-
+   // Hantera tillägg i varukorgen
    const handleAddToCart = () => {
       if (product) {
-         console.log("Adding to cart:", product.name);
          addToCart(
             {
                id: product.id,
@@ -55,18 +119,17 @@ const ProductPageDetail: React.FC = () => {
                quantity: 1,
                description: product.description,
             },
-            1 // Detta är quantityChange
+            1
          );
-         console.log("Product added to cart:", product.name);
       }
    };
 
+   if (loading || !product) return <p>Laddar...</p>;
+
    return (
       <div className="flex flex-col items-center mx-auto min-w-[319px] max-w-md pl-[1px] pr-[1px] pt-0">
-         {/* Produktbild */}
-         <div
-            className="relative w-full h-[450px] overflow-hidden"
-            style={{ marginLeft: "1px", marginRight: "1px" }}>
+         {/* Huvudbild */}
+         <div className="relative w-full h-[450px] overflow-hidden">
             <img
                src={product.images[currentImageIndex]}
                alt={product.name}
@@ -75,52 +138,35 @@ const ProductPageDetail: React.FC = () => {
          </div>
 
          {/* Bildgalleri */}
-         <div className="flex mt-[1px] self-start space-x-[1px]">
-            {product.images.map((image, index) => (
-               <div
-                  key={index}
-                  className="relative w-11 h-11 cursor-pointer"
-                  onClick={() => handleImageClick(index)}>
-                  <img
-                     src={image}
-                     alt={`Thumbnail ${index + 1}`}
-                     className={`w-full h-full object-cover ${
-                        currentImageIndex === index ? "opacity-50" : ""
-                     }`}
-                  />
-                  {currentImageIndex === index && (
-                     <div className="absolute inset-0 bg-white opacity-50"></div>
-                  )}
-               </div>
-            ))}
-         </div>
+         <ImageGallery
+            images={product.images}
+            currentIndex={currentImageIndex}
+            onImageClick={setCurrentImageIndex}
+         />
 
-         {/* Produktnamn och beskrivning */}
+         {/* Produktinformation */}
          <div className="flex flex-col items-center w-full max-w-[290px] font-light tracking-[2.85px]">
             <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
                {product.name}
             </h1>
+
             <p className="text-[16px] mt-[5px] whitespace-pre-line">
                {product.description || "Ingen beskrivning tillgänglig."}
             </p>
 
-            {/* Pris och lagerstatus */}
+            {/* Lagerstatus och pris */}
             <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
-               {/* Lagerstatus - Vänsterjusterad */}
                <div className="flex items-center">
                   {product.stock_status === "instock" ? (
-                     <span className="">
-                        I lager {product.stock_quantity}st
-                     </span>
+                     <span>I lager {product.stock_quantity}st</span>
                   ) : (
                      <div className="flex self-end items-center justify-center">
-                        <span className="">Slut i lager</span>
+                        <span>Slut i lager</span>
                         <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full"></span>
                      </div>
                   )}
                </div>
 
-               {/* Pris - Högerjusterad */}
                <div className="text-right">
                   {product.sale_price ? (
                      <>
@@ -137,20 +183,21 @@ const ProductPageDetail: React.FC = () => {
                   )}
                </div>
             </div>
-            {/* Knapp för "LÄGG I VARUKORG"eller "ORDERFÖRFRÅGAN" */}
-            {product.stock_status === "instock" ? (
-               <Button
-                  text="LÄGG I VARUKORG"
-                  className="w-[292px] h-[55px] mb-5"
-                  onClick={handleAddToCart}
-               />
-            ) : (
-               <Button
-                  text="ORDERFÖRFRÅGAN"
-                  className="w-[292px] h-[55px] mb-5"
-                  onClick={() => console.log("Orderförfrågan klickad")}
-               />
-            )}
+
+            {/* Handlingsknapp */}
+            <Button
+               text={
+                  product.stock_status === "instock"
+                     ? "LÄGG I VARUKORG"
+                     : "ORDERFÖRFRÅGAN"
+               }
+               className="w-[292px] h-[55px] mb-5"
+               onClick={
+                  product.stock_status === "instock"
+                     ? handleAddToCart
+                     : () => console.log("Orderförfrågan klickad")
+               }
+            />
          </div>
       </div>
    );
