@@ -40,11 +40,12 @@ app.use((req, res, next) => {
 // Funktion för att ta bort HTML-taggar från beskrivning
 function stripHtml(htmlString) {
    return htmlString
-      .replace(/<\/?p>/g, "\n") // Ersätter <p>-taggar med radbrytningar
-      .replace(/<\/?br\s*\/?>/g, "\n") // Ersätter <br>-taggar med radbrytningar
+      .replace(/<p>/g, "\n") // Ersätter öppnande <p> med en ny rad
+      .replace(/<\/p>/g, "") // Tar bort stängande </p>
+      .replace(/<br\s*\/?>/g, "\n") // Ersätter <br> med en ny rad
       .replace(/<\/?[^>]+(>|$)/g, "") // Tar bort övriga HTML-taggar
-      .replace(/\n/g, "\n")
-      .trim();
+      .replace(/\n{2,}/g, "\n\n") // Säkerställer att det inte finns mer än två efterföljande radbrytningar
+      .trim(); // Tar bort extra blanksteg i början och slutet
 }
 
 // Route för att hämta alla produkter från WooCommerce API
@@ -60,7 +61,7 @@ app.get("/api/products", async (req, res) => {
          }
       );
 
-      console.log(response.data);
+      //console.log(response.data);
 
       //Extrahera endast de specifika fälten från produkterna
       const products = response.data.map((product) => ({
@@ -157,10 +158,10 @@ app.post("/api/orders", async (req, res) => {
       };
 
       // Logga orderdata som skickas till WooCommerce
-      console.log(
-         "Order data sent to WooCommerce:",
-         JSON.stringify(orderData, null, 2)
-      );
+      // console.log(
+      //    "Order data sent to WooCommerce:",
+      //    JSON.stringify(orderData, null, 2)
+      // );
 
       // Skicka orderdata till WooCommerce
       const response = await axios.post(
@@ -181,11 +182,11 @@ app.post("/api/orders", async (req, res) => {
       //    JSON.stringify(response.data, null, 2)
       // );
 
-      console.log(
-         "WooCommerce Response:",
-         JSON.stringify(response.data, null, 2)
-      );
-      console.log("Generated Checkout URL:", checkoutUrl);
+      // console.log(
+      //    "WooCommerce Response:",
+      //    JSON.stringify(response.data, null, 2)
+      // );
+      // console.log("Generated Checkout URL:", checkoutUrl);
 
       // Returnera order och betalningslänk till frontend
       res.status(201).json({ order: response.data, checkoutUrl });
