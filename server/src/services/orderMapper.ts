@@ -13,7 +13,7 @@ export class OrderMapper {
    * @param orderRequest - Data som kommer från frontend
    * @returns Data formaterad för WooCommerce API
    */
-  private mapToWooCommerceRequest(
+  public mapToWooCommerceRequest(
     orderRequest: CreateOrderRequest
   ): WooCommerceOrderRequest {
     return {
