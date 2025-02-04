@@ -5,7 +5,10 @@ import { NextFunction, Request, Response } from 'express';
 import { ApiClient } from '@/services/apiClient.js';
 import { ProductMapper } from '@/services/productMapper.js';
 import { CategoryMapper } from '@/services/categoryMapper.js';
+import { OrderService } from '@/services/orderService';
+import { OrderMapper } from '@/services/orderMapper';
 import { CustomError } from '@/middleware/customError';
+import { config } from '@/config/environment';
 
 /**
  * StoreController
@@ -22,7 +25,8 @@ export class StoreController {
   constructor(
     private apiClient: ApiClient,
     private productMapper: ProductMapper,
-    private categoryMapper: CategoryMapper
+    private categoryMapper: CategoryMapper,
+    private orderService: OrderService
   ) {}
 
   /**
@@ -106,6 +110,34 @@ export class StoreController {
       res.json(category);
     } catch (error) {
       // Vid fel skickas det vidare till en central errorHandler via next(error)
+      next(error);
+    }
+  }
+
+  /**
+   * createOrder
+   * --------------
+   * 1. Validerar att varukorgen inte är tom.
+   * 2. Anropar OrderService för att skapa en order i WooCommerce.
+   * 3. Returnerar en checkout-URL där kunden kan slutföra köpet.
+   */
+  async createOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { cart, billing, shipping } = req.body;
+
+      // En validering som säkerställer att varukorgen innehåller produkter
+      if (!cart || cart.length === 0) {
+        throw new CustomError('Cart is empty or invalid', 400);
+      }
+
+      const response = await this.orderService.createOrder({
+        cart,
+        billing,
+        shipping,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
       next(error);
     }
   }
