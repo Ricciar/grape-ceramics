@@ -74,7 +74,7 @@ export class ApiClient {
    * Returnerar { data: ProductResponse }, där data motsvarar
    * en rå produktdata från WooCommerce-API:t.
    */
-  async getProductById(id: string): Promise<{ data: ProductResponse }> {
+  async getProductById(id: number): Promise<{ data: ProductResponse }> {
     return axios.get(
       `${this.config.apiUrl}products/${id}`,
       this.getAuthConfig()
@@ -88,7 +88,10 @@ export class ApiClient {
    * Returnerar { data: CategoryResponse[] }.
    */
   async getProductCategories(): Promise<{ data: CategoryResponse[] }> {
-    return axios.get(`${this.config.apiUrl}categories`, this.getAuthConfig());
+    return axios.get(
+      `${this.config.apiUrl}products/categories`,
+      this.getAuthConfig()
+    );
   }
 
   /**
