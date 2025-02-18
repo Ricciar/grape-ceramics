@@ -2,13 +2,11 @@
 // Importerar interna klasser: ApiClient, ProductMapper och CategoryMapper
 // Importerar CustomError-klass för att kunna kasta egna fel
 import { NextFunction, Request, Response } from 'express';
-import { ApiClient } from '@/services/apiClient.js';
-import { ProductMapper } from '@/services/productMapper.js';
-import { CategoryMapper } from '@/services/categoryMapper.js';
-import { OrderService } from '@/services/orderService';
-import { OrderMapper } from '@/services/orderMapper';
-import { CustomError } from '@/middleware/customError';
-import { config } from '@/config/environment';
+import { ApiClient } from '../services/apiClient.js';
+import { ProductMapper } from '../services/productMapper.js';
+import { CategoryMapper } from '../services/categoryMapper.js';
+import { OrderService } from '../services/orderService.js';
+import { CustomError } from '../middleware/customError.js';
 
 /**
  * StoreController
@@ -49,7 +47,7 @@ export class StoreController {
       }
 
       // Anropar ApiClient för att hämta produktdata
-      const response = await this.apiClient.getProductById(id);
+      const response = await this.apiClient.getProductById(Number(id));
 
       // Använder ProductMapper för att omvandla (mappa) rådata till en intern produktstruktur
       const product = this.productMapper.mapProduct(response.data);

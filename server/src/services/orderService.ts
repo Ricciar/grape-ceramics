@@ -1,13 +1,13 @@
-import { ApiClient } from './apiClient';
-import { OrderMapper } from './orderMapper';
+import { ApiClient } from '../services/apiClient.js';
+import { OrderMapper } from '../services/orderMapper.js';
 import {
   CreateOrderRequest,
   WooCommerceOrderRequest,
   WooCommerceOrderResponse,
   CreateOrderResponse,
-} from '@/controllers/types/order.types';
-import { Config } from '@/config/types/config';
-import { WooCommerceError } from '@/controllers/types/error.types';
+} from '../controllers/types/order.types.js';
+import { Config } from '../config/types/config.js';
+import { WooCommerceError } from '../controllers/types/error.types.js';
 
 export class OrderService {
   private readonly orderMapper: OrderMapper;

@@ -1,5 +1,8 @@
-import { Product, ProductResponse } from '@/controllers/types/product.types';
-import { stripHtml } from '@/utils/productUtils';
+import {
+  Product,
+  ProductResponse,
+} from '../controllers/types/product.types.js';
+import { stripHtml } from '../utils/productUtils.js';
 
 // Tar in rådata från API
 export class ProductMapper {

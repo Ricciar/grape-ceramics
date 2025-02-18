@@ -1,12 +1,12 @@
 import axios from 'axios';
-import { config } from '@/config/environment';
-import { Config } from '@/config/types/config';
-import { ProductResponse } from '@/controllers/types/product.types';
-import { CategoryResponse } from '@/controllers/types/category.types';
+import { config } from '../config/environment.js';
+import { Config } from '../config/types/config.js';
+import { ProductResponse } from '../controllers/types/product.types.js';
+import { CategoryResponse } from '../controllers/types/category.types.js';
 import {
   WooCommerceOrderRequest,
   WooCommerceOrderResponse,
-} from '@/controllers/types/order.types';
+} from '../controllers/types/order.types.js';
 
 /**
  * ApiClient

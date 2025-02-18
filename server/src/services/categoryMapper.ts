@@ -1,5 +1,8 @@
-import { CategoryResponse, Category } from '@/controllers/types/category.types';
-import { stripHtml } from '@/utils/productUtils';
+import {
+  CategoryResponse,
+  Category,
+} from '../controllers/types/category.types.js';
+import { stripHtml } from '../utils/productUtils.js';
 
 export class CategoryMapper {
   mapCategory(category: CategoryResponse): Category {

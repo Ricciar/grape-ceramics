@@ -5,7 +5,7 @@ import {
   WooCommerceOrderResponse,
   WooCommerceAddress,
   CustomerAddress,
-} from '@/controllers/types/order.types';
+} from '../controllers/types/order.types.js';
 
 export class OrderMapper {
   /**

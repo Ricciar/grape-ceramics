@@ -1,8 +1,8 @@
-import { ApiClient } from '@/services/apiClient';
+import { ApiClient } from '../services/apiClient.js';
 import {
   WooCommerceOrderRequest,
   WooCommerceOrderResponse,
-} from '@/controllers/types/order.types';
+} from '../controllers/types/order.types.js';
 import axios from 'axios';
 
 // Mocka axios för att undvika riktiga API-anrop när vi testar
