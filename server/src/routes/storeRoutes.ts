@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { StoreController } from '@/controllers/storeController';
-import { ApiClient } from '@/services/apiClient';
-import { ProductMapper } from '@/services/productMapper';
-import { CategoryMapper } from '@/services/categoryMapper';
-import { OrderService } from '@/services/orderService';
-import { config } from '@/config/environment';
+import { StoreController } from '@/controllers/storeController.js';
+import { ApiClient } from '@/services/apiClient.js';
+import { ProductMapper } from '@/services/productMapper.js';
+import { CategoryMapper } from '@/services/categoryMapper.js';
+import { OrderService } from '@/services/orderService.js';
+import { config } from '@/config/environment.js';
 import { Config } from '@/config/types/config';
 
 const router = Router();
@@ -16,18 +16,20 @@ const serviceConfig: Config = {
   woocommerceConsumerSecret: config.woocommerceConsumerSecret,
 };
 
-const apiClient = new ApiClient();
+const apiClient = new ApiClient(serviceConfig);
 const productMapper = new ProductMapper();
 const categoryMapper = new CategoryMapper();
 const orderService = new OrderService(serviceConfig);
 
-export const storeController = new StoreController(
+// En instans av StoreController skapas med hjälp av de instanser som skapats ovan
+const storeController = new StoreController(
   apiClient,
   productMapper,
   categoryMapper,
   orderService
 );
 
+// Här definieras de olika endpoints som StoreController ska hantera
 router.get(
   '/products/:id',
   storeController.getProductById.bind(storeController)
