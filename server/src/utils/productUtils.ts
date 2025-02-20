@@ -10,19 +10,23 @@
  * 6. Trim - tar bort extra whitespace i början och slutet.
  */
 export function stripHtml(htmlString: string): string {
+  if (!htmlString) return '';
+
   return (
     htmlString
-      // Byt ut <p> mot radbrytning
-      .replace(/<p>/g, '\n')
-      // Ta bort </p>
-      .replace(/<\/p>/g, '')
-      // Byt ut <br> (inklusive eventuellt snedstreck) mot radbrytning
-      .replace(/<br\s*\/?>/g, '\n')
-      // Ta bort alla övriga HTML-taggar (ex. <div>, <span>, <img>, etc.)
-      .replace(/<\/?[^>]+(>|$)/g, '')
-      // Sammanpressa flera ny rad-tecken till två
-      .replace(/\n{2,}/g, '\n\n')
-      // Trimma bort extra whitespace i början och slutet
+      // Ta bort HTML-taggar först
+      .replace(/<p[^>]*>/g, '') // Ta bort <p> taggar med attribut
+      .replace(/<\/p>/g, '\n') // Ersätt </p> med newline
+      .replace(/<br\s*\/?>/g, '\n') // Ersätt <br> med newline
+      .replace(/<\/?[^>]+(>|$)/g, '') // Ta bort alla andra HTML-taggar
+      // Hantera radbrytningar
+      .replace(/\r\n/g, '\n') // Normalisera Windows radbrytningar
+      .replace(/\n\n+/g, '\n') // Ersätt multipla newlines med en
+      // Slutlig formatering
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .join('\n')
       .trim()
   );
 }
