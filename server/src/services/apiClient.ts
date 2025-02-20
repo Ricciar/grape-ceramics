@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosInstance, Axios } from 'axios';
 import { config } from '../config/environment.js';
 import { Config } from '../config/types/config.js';
 import { ProductResponse } from '../controllers/types/product.types.js';
@@ -51,7 +51,7 @@ export class ApiClient {
         username: this.config.woocommerceConsumerKey,
         password: this.config.woocommerceConsumerSecret,
       },
-      timeout: 10000,
+      timeout: 30000,
     };
   }
 
