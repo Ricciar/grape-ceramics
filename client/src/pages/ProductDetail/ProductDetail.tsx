@@ -56,25 +56,26 @@ const ProductDetail: React.FC = () => {
   if (error) return <p>Error fetching product</p>;
 
   return (
-    <div className="flex flex-col items-center mx-auto min-w-[319px] max-w-md pl-[1px] pr-[1px] pt-0">
-      {/* Huvudbild */}
-      <div className="relative w-full h-[450px] overflow-hidden">
-        <img
-          src={product.images[currentImageIndex]}
-          alt={product.name}
-          className="w-full h-full object-cover"
+    <div className="flex flex-col items-center md:flex-row md:justify-around md:gap-[11rem] mx-auto min-w-[319px] max-w-md md:max-w-[1200px] pl-[1px] pr-[1px] pt-0">
+      <div className="w-full md:w-1/2 flex flex-col">
+        {/* Huvudbild */}
+        <div className="relative w-full md:w-[600px] h-[450px] md:h-[645px] overflow-hidden">
+          <img
+            src={product.images[currentImageIndex]}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Bildgalleri */}
+        <ImageGallery
+          images={product.images}
+          currentIndex={currentImageIndex}
+          onImageClick={setCurrentImageIndex}
         />
       </div>
-
-      {/* Bildgalleri */}
-      <ImageGallery
-        images={product.images}
-        currentIndex={currentImageIndex}
-        onImageClick={setCurrentImageIndex}
-      />
-
       {/* Produktinformation */}
-      <div className="flex flex-col items-center w-full max-w-[290px] font-light tracking-[2.85px]">
+      <div className="flex flex-col items-center w-full md:w-1/2 md:items-start max-w-[290px] md:max-w-none font-light tracking-[2.85px]">
         <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
           {product.name}
         </h1>
