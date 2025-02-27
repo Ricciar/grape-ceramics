@@ -11,7 +11,7 @@ const ImageGallery = ({
     {images.map((image, index) => (
       <div
         key={index}
-        className="relative min-w-[44px] h-11 cursor-pointer"
+        className="relative min-w-[44px] h-11 md:w-[90px] md:h-[90px] cursor-pointer"
         onClick={() => onImageClick(index)}
       >
         <img

@@ -56,7 +56,7 @@ const ProductDetail: React.FC = () => {
   if (error) return <p>Error fetching product</p>;
 
   return (
-    <div className="flex flex-col items-center md:flex-row md:justify-around md:gap-[11rem] mx-auto min-w-[319px] max-w-md md:max-w-[1200px] pl-[1px] pr-[1px] pt-0">
+    <div className="flex flex-col items-center md:flex-row md:justify-around md:gap-[11rem]">
       <div className="w-full md:w-1/2 flex flex-col">
         {/* Huvudbild */}
         <div className="relative w-full md:w-[600px] h-[450px] md:h-[645px] overflow-hidden">
