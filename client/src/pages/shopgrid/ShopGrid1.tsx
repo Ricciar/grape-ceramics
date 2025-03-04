@@ -10,21 +10,37 @@ const ShopGrid1: React.FC = () => {
   const navigate = useNavigate();
 
   // Funktion för att beräkna produkt-layoutklasser baserat på index
+  // Hanterar upprepade mönster med 7 produkter per cykel
   const getProductLayoutClass = (index: number): string => {
+    // Position i 7-produkters cykeln (0-6)
+    const cyclePosition = index % 7;
+
     let classes = 'cursor-pointer';
 
-    if (index === 2) classes += ' row-start-2';
-    if (index === 2) classes += ' row-start-2';
-    if (index === 4) classes += ' col-span-2 row-span-2 row-start-3';
-    if (index === 5) classes += ' row-start-5';
-    if (index === 6) classes += ' row-start-5';
+    switch (cyclePosition) {
+      case 2:
+        classes += ' row-start-2';
+        break;
+      case 3:
+        classes += ' row-start-2';
+        break;
+      case 4:
+        classes += ' col-span-2 row-span-2 row-start-3';
+        break;
+      case 5:
+        classes += ' row-start-5';
+        break;
+      case 6:
+        classes += ' row-start-5';
+        break;
+    }
 
     return classes;
   };
 
   // Funktion för att beräkna bildhöjdsklasser basert på index
   const getImageHeightClass = (index: number): string => {
-    return index === 4 ? 'h-auto md:min-h-[550px]' : 'h-[257px]';
+    return index % 7 === 4 ? 'h-auto md:min-h-[550px]' : 'h-[257px]';
   };
 
   useEffect(() => {
