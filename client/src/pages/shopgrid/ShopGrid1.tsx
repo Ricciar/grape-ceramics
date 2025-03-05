@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Product } from './types';
 import ProductCard from './ProductCard';
+import DesktopProductCard from './DesktopProductCard';
 
 const ShopGrid1: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,14 +45,25 @@ const ShopGrid1: React.FC = () => {
         </button>
       </div>
 
-      {/* Produktgrid */}
+      {/* Mobil & tablet layout - döljs på desktop */}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-auto gap-[1px]">
+      <div className="grid grid-cols-2 md:grid-cols-2 auto-rows-auto gap-[1px] lg:hidden">
         {products.map((product, index) => (
           <ProductCard
             key={product.id}
             product={product}
             index={index}
+            onClick={navigateToProduct}
+          />
+        ))}
+      </div>
+
+      {/* Desktop layout - visas endast på lg och uppåt */}
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-[1px]">
+        {products.map((product) => (
+          <DesktopProductCard
+            key={product.id}
+            product={product}
             onClick={navigateToProduct}
           />
         ))}
