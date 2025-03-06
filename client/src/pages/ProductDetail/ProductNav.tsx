@@ -1,7 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const ProductNav: React.FC = () => {
+interface ProductNavProps {
+  loading?: boolean;
+}
+
+const ProductNav: React.FC<ProductNavProps> = ({ loading = false }) => {
+  if (loading) {
+    return (
+      <div className="py-6" role="status">
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-5 bg-gray-200 animate-pulse"></div>
+          <div className="w-40 h-5 bg-gray-200 animate-pulse "></div>
+        </div>
+        <span className="sr-only">Laddar navigation...</span>
+      </div>
+    );
+  }
   return (
     <div className="py-6">
       <Link

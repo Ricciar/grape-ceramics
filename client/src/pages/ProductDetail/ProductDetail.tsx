@@ -5,9 +5,9 @@ import ProductSkeleton from './ProductSkeleton';
 import ImageGallery from './ImageGallery';
 import Button from '../../components/Button';
 import useCart from '../../components/Cart/UseCart';
-import { Product } from './types';
+import { Product, ProductDetailProps } from './types';
 
-const ProductDetail: React.FC = () => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,6 +19,8 @@ const ProductDetail: React.FC = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
+        if (onLoadingChange) onLoadingChange(true);
+
         const response = await axios.get(`/api/products/${id}`);
         console.log('Product fetched:', response.data);
         setProduct(response.data);
@@ -27,6 +29,7 @@ const ProductDetail: React.FC = () => {
         setError(true);
       } finally {
         setLoading(false);
+        if (onLoadingChange) onLoadingChange(false);
       }
     };
 
