@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Product } from './types';
 import ProductCard from './ProductCard';
 import DesktopProductCard from './DesktopProductCard';
+import SkeletonProductCard from './SkeletonProductCard';
+import SkeletonDesktopProductCard from './SkeletonDesktopProductCard';
 
 const ShopGrid1: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,8 +31,9 @@ const ShopGrid1: React.FC = () => {
     navigate(`/product/${productId}`);
   };
 
-  // Produktkort-komponent
-  if (loading) return <p>Loading...</p>;
+  // Funktion som skapar en array för skeleton placeholders
+  const mobileSkeletonIndices = Array.from({ length: 7 }, (_, index) => index);
+  const desktopSkeletonIndices = Array.from({ length: 9 }, (_, index) => index);
 
   return (
     <div className="p-[1px] max-w-6xl mx-auto">
@@ -45,28 +48,39 @@ const ShopGrid1: React.FC = () => {
         </button>
       </div>
 
-      {/* Mobil & tablet layout - döljs på desktop */}
-
+      {/* Mobil & tablet layout */}
       <div className="grid grid-cols-2 md:grid-cols-2 auto-rows-auto gap-[1px] lg:hidden">
-        {products.map((product, index) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            index={index}
-            onClick={navigateToProduct}
-          />
-        ))}
+        {loading
+          ? // Visa skeleton loaders
+            mobileSkeletonIndices.map((index) => (
+              <SkeletonProductCard key={index} index={index} />
+            ))
+          : // Visa produkter
+            products.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                index={index}
+                onClick={navigateToProduct}
+              />
+            ))}
       </div>
 
-      {/* Desktop layout - visas endast på lg och uppåt */}
+      {/* Desktop layout */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-[1px]">
-        {products.map((product) => (
-          <DesktopProductCard
-            key={product.id}
-            product={product}
-            onClick={navigateToProduct}
-          />
-        ))}
+        {loading
+          ? // Visa desktop skeleton loaders
+            desktopSkeletonIndices.map((index) => (
+              <SkeletonDesktopProductCard key={index} />
+            ))
+          : // Visa desktop produkter
+            products.map((product) => (
+              <DesktopProductCard
+                key={product.id}
+                product={product}
+                onClick={navigateToProduct}
+              />
+            ))}
       </div>
     </div>
   );
