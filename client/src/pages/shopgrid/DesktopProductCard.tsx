@@ -12,6 +12,7 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({
         <img
           src={product.images.at(0)}
           alt={product.name}
+          loading="lazy"
           className="w-full h-full object-cover"
         />
       </div>
