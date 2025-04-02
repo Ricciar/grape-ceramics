@@ -66,43 +66,35 @@ const CategoryList: React.FC<CategoryListProps> = ({
 
   return (
     <div className="space-y-4">
-      {categories.map((category) => {
-        const isSelected = selectedCategoryIds.includes(category.id);
-        const productCount = productCountByCategory[category.id] || 0;
-        const displayCount =
-          countDisplay[category.id] !== undefined
-            ? countDisplay[category.id]
-            : productCount;
+      {categories
+        .filter((category) => (productCountByCategory[category.id] || 0) > 0)
+        .map((category) => {
+          const isSelected = selectedCategoryIds.includes(category.id);
+          const productCount = productCountByCategory[category.id] || 0;
+          const displayCount =
+            countDisplay[category.id] !== undefined
+              ? countDisplay[category.id]
+              : productCount;
 
-        return (
-          <div key={category.id} className="py-2">
-            <button
-              className={`w-full text-left flex justify-between items-center p-2 border-b ${
-                isSelected ? 'font-bold' : 'font-light'
-              }`}
-              onClick={() => onCategoryClick(category.name)}
-              aria-pressed={isSelected}
-            >
-              <span>{category.name}</span>
-              <div className="flex items-center">
-                {isSelected && (
-                  <span
-                    className="w-2 h-2 bg-black rounded-full mr-2"
-                    aria-hidden="true"
-                  ></span>
-                )}
-                <span
-                  className={`text-gray-600 min-w-[3rem] text-right ${
-                    isSelected ? 'font-bold' : ''
-                  }`}
-                >
+          return (
+            <div key={category.id} className="py-2">
+              <button
+                className={`w-full text-left flex justify-between items-center p-2 border-b transition ${
+                  isSelected
+                    ? 'bg-gray-100 text-black'
+                    : 'text-gray-600 font-light'
+                }`}
+                onClick={() => onCategoryClick(category.name)}
+                aria-pressed={isSelected}
+              >
+                <span>{category.name}</span>
+                <span className="min-w-[3rem] text-right">
                   ({displayCount})
                 </span>
-              </div>
-            </button>
-          </div>
-        );
-      })}
+              </button>
+            </div>
+          );
+        })}
     </div>
   );
 };
