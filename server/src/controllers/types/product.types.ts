@@ -16,6 +16,10 @@ export interface ProductResponse {
   price: string;
   stock_status: string;
   stock_quantity: number | null;
+  categories: {
+    id: number;
+    name: string;
+  }[];
 }
 
 /**
@@ -33,4 +37,8 @@ export interface Product {
   price: string;
   stock_status: string;
   stock_quantity: number | null;
+  categories: {
+    id: number;
+    name: string;
+  }[];
 }

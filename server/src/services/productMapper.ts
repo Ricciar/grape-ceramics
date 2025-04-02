@@ -17,6 +17,10 @@ export class ProductMapper {
       price: product.price,
       stock_status: product.stock_status,
       stock_quantity: product.stock_quantity,
+      categories: product.categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      })),
     };
   }
 }

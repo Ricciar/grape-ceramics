@@ -1,3 +1,5 @@
+import { Category } from '../filter/types';
+
 export interface Product {
   id: number;
   name: string;
@@ -5,6 +7,7 @@ export interface Product {
   regular_price: string;
   sale_price: string | null;
   price: string;
+  categories: Category[];
 }
 
 export interface ProductCardProps {
