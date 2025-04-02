@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import { Category, FilterMenuProps } from './types';
 import CategoryList from './CatergoryList';
+import CategorySkeleton from './categorySkeleton';
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
   isOpen = false,
@@ -9,30 +9,29 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   products = [],
   onFilterProducts,
 }) => {
+  const extractCategories = useMemo(() => {
+    return Array.from(
+      products
+        .flatMap((product) => product.categories || [])
+        .reduce((map, category) => map.set(category.id, category), new Map())
+        .values()
+    );
+  }, [products]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(products.length === 0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Funktion för att hämta kategorier från API
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/category');
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Fel vid hämtning av kategorier:', error);
-    } finally {
+  useEffect(() => {
+    if (products.length > 0) {
+      setCategories(extractCategories);
       setLoading(false);
     }
-  };
-
+  }, [products, extractCategories]);
   // Ladda tidigare valda kategorier från localStorage när komponenten monteras
   useEffect(() => {
-    // Hämta kategorier från API
-    fetchCategories();
-
     // Ladda sparade kategorival från localStorage
     try {
       const savedCategories = localStorage.getItem('selectedCategories');
@@ -213,9 +212,9 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             </button>
           </div>
 
-          {/* Filterkategorier */}
+          {/* Filterkategorier med skeleton loader */}
           {loading ? (
-            <p>Laddar kategorier...</p>
+            <CategorySkeleton count={categories.length || 3} />
           ) : (
             <CategoryList
               categories={categories}

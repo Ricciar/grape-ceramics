@@ -4,6 +4,7 @@ export interface FilterMenuProps {
   isOpen?: boolean;
   onClose?: () => void;
   products?: Product[];
+  categories?: Category[];
   onFilterProducts?: (filteredProducts: Product[]) => void;
 }
 
