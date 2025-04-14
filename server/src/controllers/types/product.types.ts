@@ -9,7 +9,7 @@ export interface ProductResponse {
   name: string;
 
   // Här är images en array av objekt, där varje objekt har en egenskap 'src'
-  images: Array<{ src: string }>;
+  images: ProductImages[];
   description: string;
   short_description: string;
   regular_price: string;
@@ -24,6 +24,13 @@ export interface ProductResponse {
   tags: FeaturedProduct[];
 }
 
+export interface ProductImages {
+  id: number;
+  name: string;
+  alt: string;
+  src: string;
+}
+
 /**
  * Intern produktmodell för applikationen
  * Detta är vår standardiserade produktstruktur som används genom applikationen
@@ -32,7 +39,7 @@ export interface ProductResponse {
 export interface Product {
   id: number;
   name: string;
-  images: string[];
+  images: ProductImages[];
   description: string;
   short_description: string;
   regular_price: string;

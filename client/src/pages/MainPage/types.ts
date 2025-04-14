@@ -55,6 +55,13 @@ export interface WPPost {
   _embedded?: WPEmbedded;
 }
 
+export interface WooImage {
+  id: number;
+  src: string;
+  alt: string;
+  name: string;
+}
+
 // WordPress Embedded-innehåll
 export interface WPEmbedded {
   'wp:featuredmedia'?: WPMedia[];
