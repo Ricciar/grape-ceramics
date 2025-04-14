@@ -1,6 +1,7 @@
 import {
   Product,
   ProductResponse,
+  FeaturedProduct,
 } from '../controllers/types/product.types.js';
 import { stripHtml } from '../utils/productUtils.js';
 
@@ -12,6 +13,7 @@ export class ProductMapper {
       name: product.name,
       images: product.images.map((image) => image.src),
       description: stripHtml(product.description),
+      short_description: stripHtml(product.short_description),
       regular_price: product.regular_price,
       sale_price: product.sale_price,
       price: product.price,
@@ -21,6 +23,7 @@ export class ProductMapper {
         id: category.id,
         name: category.name,
       })),
+      tags: product.tags || [],
     };
   }
 }
