@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Category, FilterMenuProps } from './types';
 import CategoryList from './CatergoryList';
-import CategorySkeleton from './categorySkeleton';
+import CategorySkeleton from './CategorySkeleton';
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
   isOpen = false,
