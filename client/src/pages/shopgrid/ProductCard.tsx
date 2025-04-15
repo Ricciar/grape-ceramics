@@ -21,8 +21,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         className={`w-full ${getImageHeightClasses(index)} bg-gray-100 overflow-hidden`}
       >
         <img
-          src={product.images.at(0)}
-          alt={product.name}
+          src={product.images[0].src}
+          alt={product.images[0].alt}
           loading="lazy"
           className="w-full h-full object-cover"
         />
