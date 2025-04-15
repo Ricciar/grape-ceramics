@@ -11,6 +11,10 @@ export interface Product {
   stock_status: string;
 }
 
+export interface ProductDetailProps {
+  onLoadingChange?: (loading: boolean) => void;
+}
+
 // Props för bildgalleriet
 export interface ImageGalleryProps {
   images: string[];

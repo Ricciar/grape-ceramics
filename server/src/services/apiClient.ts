@@ -63,8 +63,19 @@ export class ApiClient {
    * { data: ProductResponse[] }
    * @throws {Error} vid nätverks- eller API-fel
    */
-  async getProducts(): Promise<{ data: ProductResponse[] }> {
-    return axios.get(`${this.config.apiUrl}products`, this.getAuthConfig());
+  async getProducts(
+    page: number = 1,
+    perPage: number = 12
+  ): Promise<{ data: ProductResponse[]; headers: any }> {
+    return axios.get(`${this.config.apiUrl}products`, {
+      ...this.getAuthConfig(),
+      params: {
+        page,
+        per_page: perPage,
+        _fields:
+          'id,name,price,description,short_description,images,categories,variations,attributes, tags',
+      },
+    });
   }
 
   /**

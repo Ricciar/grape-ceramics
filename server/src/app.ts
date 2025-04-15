@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler.js';
 import storeRoutes from './routes/storeRoutes.js';
+import pageRoutes from './routes/pageRoutes.js';
 
 const app = express();
 
@@ -26,7 +27,8 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api', storeRoutes);
+app.use('/api', storeRoutes); // Woo Commerce
+app.use('/api/pages', pageRoutes); // WorPress sidor
 
 // Catch-all route för odefinierade endpoints
 app.use('*', (req, res) => {

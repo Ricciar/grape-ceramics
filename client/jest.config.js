@@ -14,9 +14,10 @@ export default {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
   // Talar om var vår setup-fil finns
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  //setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
 
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

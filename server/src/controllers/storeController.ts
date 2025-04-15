@@ -70,16 +70,21 @@ export class StoreController {
    */
   async getAllProducts(req: Request, res: Response, next: NextFunction) {
     try {
+      const page = Number(req.query.page) || 1;
+      const perPage = Number(req.query.per_page) || 12;
       // Hämtar en lista av produkter via ApiClient
-      const response = await this.apiClient.getProducts();
+      const response = await this.apiClient.getProducts(page, perPage);
 
       // Mappar varje produkt i svaret genom ProductMapper till den interna produktstrukturen
       const products = response.data.map((p) =>
         this.productMapper.mapProduct(p)
       );
 
+      const totalPages = Number(response.headers['x-wp-totalpages']) || 1;
+      const totalProducts = Number(response.headers['x-wp-total']) || 0;
+
       // Skickar en array av mappade produkter som svar
-      res.json(products);
+      res.json({ products, totalPages, totalProducts, currentPage: page });
     } catch (error) {
       // Vid fel skickas det vidare till en central errorHandler via next(error)
       next(error);

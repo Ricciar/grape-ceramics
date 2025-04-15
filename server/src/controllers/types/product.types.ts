@@ -9,13 +9,26 @@ export interface ProductResponse {
   name: string;
 
   // Här är images en array av objekt, där varje objekt har en egenskap 'src'
-  images: Array<{ src: string }>;
+  images: ProductImages[];
   description: string;
+  short_description: string;
   regular_price: string;
   sale_price: string;
   price: string;
   stock_status: string;
   stock_quantity: number | null;
+  categories: {
+    id: number;
+    name: string;
+  }[];
+  tags: FeaturedProduct[];
+}
+
+export interface ProductImages {
+  id: number;
+  name: string;
+  alt: string;
+  src: string;
 }
 
 /**
@@ -26,11 +39,25 @@ export interface ProductResponse {
 export interface Product {
   id: number;
   name: string;
-  images: string[];
+  images: ProductImages[];
   description: string;
+  short_description: string;
   regular_price: string;
   sale_price: string;
   price: string;
   stock_status: string;
   stock_quantity: number | null;
+  categories: {
+    id: number;
+    name: string;
+  }[];
+  tags: FeaturedProduct[];
+}
+
+export interface FeaturedProduct {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  count: number;
 }
