@@ -73,7 +73,7 @@ export class ApiClient {
         page,
         per_page: perPage,
         _fields:
-          'id,name,price,description,short_description,images,categories,variations,attributes',
+          'id,name,price,description,short_description,images,categories,variations,attributes, tags',
       },
     });
   }
