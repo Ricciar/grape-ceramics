@@ -14,6 +14,7 @@ export default {
       },
       letterSpacing: {
         'custom-wide': '3.04px', // Skapar en ny klass för letter-spacing
+        'custom-wide-2': '4.8px',
       },
     },
   },
