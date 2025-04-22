@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { WPPage } from './types';
 import { Product, FeaturedProducts } from '../shopgrid/types';
 import { extractVideoBlock } from '../../utils/extractVideoBlock';
+import { SkeletonMainPage } from './SkeletonMainPage';
 
 // Mobile/Tablet Product Card Component
 const MobileProductCard = ({
@@ -72,7 +73,6 @@ const DesktopProductCard = ({
   product: Product;
   showDescription?: boolean;
 }) => {
-  // Uses the same structure as mobile but could be customized differently
   return (
     <MobileProductCard product={product} showDescription={showDescription} />
   );
@@ -194,11 +194,7 @@ const MainPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
+    return <SkeletonMainPage />;
   }
 
   if (error) {
@@ -231,7 +227,7 @@ const MainPage: React.FC = () => {
   ].filter((product) => product !== null);
 
   return (
-    <div className="w-full max-w-full overflow-hidden">
+    <div className="w-full max-w-full ml-[2px] mr-[2px] overflow-hidden">
       {/* Mobile/Tablet Layout */}
       <div className="flex flex-col md:hidden">
         {/* Video Section */}
@@ -243,7 +239,7 @@ const MainPage: React.FC = () => {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <div className="w-full h-full flex items-center justify-center bg-gray-200 mt-[2px] z-0">
               <p>Ingen video tillgänglig</p>
             </div>
           )}
@@ -251,7 +247,7 @@ const MainPage: React.FC = () => {
 
         {/* First Row of Products */}
         {featuredProductsArray.length >= 2 && (
-          <div className="w-full grid grid-cols-2 p-[2px] gap-[2px] z-10">
+          <div className="w-full grid grid-cols-2 gap-[1px] z-10">
             {featuredProductsArray[0] && (
               <MobileProductCard
                 product={featuredProductsArray[0]}
@@ -269,7 +265,7 @@ const MainPage: React.FC = () => {
 
         {/* Info Section */}
         {infoSection && (
-          <div className="w-full bg-[#DFCABB] py-8 px-4 text-center h-[225px] md:h-[456px] flex items-center justify-center z-10">
+          <div className="w-full bg-[#DFCABB] py-8 px-4 text-center h-[225px] md:h-[456px] flex items-center justify-center ml-[2px] mr-[2px] z-10">
             <div className="max-w-4xl mx-auto">
               <h2
                 className="text-2xl uppercase tracking-custom-wide-2 text-gray-800 mb-6"
@@ -289,7 +285,7 @@ const MainPage: React.FC = () => {
 
         {/* Second Row of Products (only mobile) */}
         {featuredProductsArray.length >= 4 && (
-          <div className="w-full grid grid-cols-2 p-[2px] gap-[2px] z-10 md:hidden">
+          <div className="w-full grid grid-cols-2 gap-[2px] mb-[2px] z-10 md:hidden">
             {featuredProductsArray[2] && (
               <MobileProductCard
                 product={featuredProductsArray[2]}
