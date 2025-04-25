@@ -15,8 +15,11 @@ export interface Product {
   regular_price: string;
   sale_price: string | null;
   price: string;
+  stock_status: string;
+  stock_quantity: number | null;
   categories: Category[];
   tags: Tag[];
+  description: string;
   short_description: string;
 }
 
@@ -31,6 +34,10 @@ export interface ProductCardProps {
   product: Product;
   index: number;
   onClick: (id: number) => void;
+}
+
+export interface ProductDetailProps {
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 export interface DesktopProductCardProps {

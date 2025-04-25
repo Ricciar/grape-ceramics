@@ -5,7 +5,7 @@ import ProductSkeleton from './ProductSkeleton';
 import ImageGallery from './ImageGallery';
 import Button from '../../components/Button';
 import useCart from '../../components/Cart/UseCart';
-import { Product, ProductDetailProps } from './types';
+import { Product, ProductDetailProps } from '../shopgrid/types';
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
   const { id } = useParams<{ id: string }>();
@@ -36,17 +36,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
     if (id) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, onLoadingChange]);
 
   // Hantera tillägg i varukorgen
   const handleAddToCart = () => {
     if (product) {
+      const primaryImage =
+        product.images.length > 0 ? product.images[0].src : '';
+
       addToCart(
         {
           id: product.id,
           name: product.name,
           price: product.price,
-          imageUrl: product.images[0] || '',
+          imageUrl: primaryImage,
           quantity: 1,
           description: product.description,
         },
@@ -58,28 +61,43 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
   if (loading || !product) return <ProductSkeleton />;
   if (error) return <p>Error fetching product</p>;
 
+  const hasImages = product.images && product.images.length > 0;
+  const currentImage = hasImages ? product.images[currentImageIndex] : null;
+
   return (
     <div className="flex flex-col items-center md:flex-row md:justify-around md:gap-[11rem]">
       <div className="w-full md:w-1/2 flex flex-col">
         {/* Huvudbild */}
         <div className="relative w-full md:w-[600px] h-[450px] md:h-[645px] overflow-hidden">
-          <img
-            src={product.images[currentImageIndex]}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+          {currentImage ? (
+            <img
+              src={currentImage.src}
+              alt={currentImage.alt || product.name}
+              className="w-full h-full object-cover"
+              aria-labelledby={`product-title-${product.id}`}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span>No image available</span>
+            </div>
+          )}
         </div>
 
         {/* Bildgalleri */}
-        <ImageGallery
-          images={product.images}
-          currentIndex={currentImageIndex}
-          onImageClick={setCurrentImageIndex}
-        />
+        {hasImages && (
+          <ImageGallery
+            images={product.images.map((img) => img.src)}
+            currentIndex={currentImageIndex}
+            onImageClick={setCurrentImageIndex}
+          />
+        )}
       </div>
       {/* Produktinformation */}
       <div className="flex flex-col items-center w-full md:w-1/2 md:items-start max-w-[290px] md:max-w-none font-light tracking-[2.85px]">
-        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
+        <h1
+          id={`product-title-${product.id}`}
+          className="font-sans text-[24px] font-light tracking-[4.56px] mt-5"
+        >
           {product.name}
         </h1>
 
@@ -91,7 +109,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
         <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
           <div className="flex items-center">
             {product.stock_status === 'instock' ? (
-              <span>I lager {product.stock_quantity}st</span>
+              <span>
+                I lager{' '}
+                {product.stock_quantity !== null
+                  ? `${product.stock_quantity} pcs`
+                  : ''}
+                st
+              </span>
             ) : (
               <div className="flex self-end items-center justify-center">
                 <span>Slut i lager</span>
