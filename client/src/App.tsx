@@ -12,6 +12,7 @@ import Navbar from './components/Navbar/Navbar';
 import ProductWrapper from './pages/ProductWrapper';
 import MainPage from './pages/MainPage/MainPage';
 import ShopGrid1 from './pages/shopgrid/ShopGrid1';
+import ContactPage from './pages/Contact/ContactPage';
 
 function App(): JSX.Element {
   return (
@@ -29,6 +30,7 @@ function App(): JSX.Element {
 
           {/* Route för produktsidan, med dynamisk produkt-ID */}
           <Route path="/product/:id" element={<ProductWrapper />} />
+          <Route path="/kontakt" element={<ContactPage />} />
         </Routes>
       </Router>
     </CartProvider>
