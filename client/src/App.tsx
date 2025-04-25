@@ -20,16 +20,19 @@ function App(): JSX.Element {
       <Router>
         <Navbar />
         <Routes>
-          {/* <Route path="/" element={<Home />} */}
+          {/* Route för startsidan */}
           <Route path="/" element={<MainPage />} />
-          {/* Redirect från home till shop */}
-          {/*<Route path="/" element={<Navigate to="/shop" replace />} /> */}
 
-          {/* Shop page - Product listing */}
-          <Route path="/shop" element={<ShopGrid1 />} />
+          {/* Route för kurser */}
+          {/* <Route path="/kurser" element={<CoursesPage />} /> */}
 
-          {/* Route för produktsidan, med dynamisk produkt-ID */}
+          {/* Route för butik */}
+          <Route path="/butik" element={<ShopGrid1 />} />
+
+          {/* Route för produktsidan */}
           <Route path="/product/:id" element={<ProductWrapper />} />
+
+          {/* Route för kontakt */}
           <Route path="/kontakt" element={<ContactPage />} />
         </Routes>
       </Router>
