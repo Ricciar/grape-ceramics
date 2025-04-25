@@ -8,6 +8,10 @@ const NavMenu: React.FC = () => {
     setIsOpen(!isOpen);
   };
 
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative">
       <button
@@ -34,22 +38,25 @@ const NavMenu: React.FC = () => {
 
       {/* Navigationslänkar som visas när menyn är öppen */}
       {isOpen && (
-        <div className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-14 z-50">
+        <div className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-14 z-50 transition-all duration-300 ease-in-out">
           <Link
             to="/kurser"
             className="py-4 text-stone-800 hover:text-stone-600"
+            onClick={closeMenu}
           >
             KURSER
           </Link>
           <Link
             to="/butik"
             className="py-4 text-stone-800 hover:text-stone-600"
+            onClick={closeMenu}
           >
             BUTIK
           </Link>
           <Link
             to="/kontakt"
             className="py-4 text-stone-800 hover:text-stone-600"
+            onClick={closeMenu}
           >
             KONTAKT
           </Link>
