@@ -7,28 +7,34 @@ const Navbar: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
-    <nav className="mx-auto min-w-[319px] max-w-md flex justify-between items-center p-4 bg-[#F8F4EC]">
-      {/* Hamburger Menu */}
-      <NavMenu />
-      {/* Logo */}
-      <h1
-        className="flex flex-col justify-center align-middle
-       text-[24px] tracking-[4.37px]"
-      >
-        GRAPE{' '}
-        <span className="text-[14px] tracking-[2.66px]">
-          <br />
-          CERAMICS
-        </span>
-      </h1>
-      {/* Cart Icon */}
-      <button onClick={() => setIsCartOpen(true)}>
-        <CartIcon />
-      </button>
+    <div className="bg-[#F8F4EC]">
+      <nav className="mx-auto w-[300px] min-w-[300px] md:w-full flex justify-between items-center p-1 px-4 md:px-4 lg:px-8 bg-[#F8F4EC]">
+        {/* Hamburger Menu */}
+        <div className="flex items-center">
+          <NavMenu />
+        </div>
 
-      {/* Cart Page */}
-      <CartPage isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-    </nav>
+        {/* Logo */}
+        <h1 className="flex flex-col justify-center items-center leading-none">
+          <span className="text-[20px] md:text-[23px] tracking-[4.37px]">
+            GRAPE
+          </span>
+          <span className="text-[12px] md:text-[14px] tracking-[2.66px]">
+            CERAMICS
+          </span>
+        </h1>
+
+        {/* Cart Icon */}
+        <div className="flex items-center">
+          <button onClick={() => setIsCartOpen(true)} className="p-2">
+            <CartIcon />
+          </button>
+        </div>
+
+        {/* Cart Page */}
+        <CartPage isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      </nav>
+    </div>
   );
 };
 
