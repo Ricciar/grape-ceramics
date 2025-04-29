@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CartIcon from './CartIcon';
 import CartPage from '../Cart/CartPage';
 import NavMenu from './NavMenu';
@@ -8,20 +8,39 @@ import logotype from '../../assets/logotype.svg';
 const Navbar: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const navbarRef = useRef<HTMLDivElement>(null);
+  const [spacerHeight, setSpacerHeight] = useState(0);
 
-  // Lyssna på förändringar i fönsterstorlek
+  // Lyssna på förändringar i fönsterstorlek och beräkna navbarhöjd
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+
+      // Mät faktisk höjd på navbaren
+      if (navbarRef.current) {
+        // Beräkna en mindre höjd för att visa mer innehåll under
+        // Du kan justera dessa värden för att få mer/mindre synligt innehåll
+        const actualHeight = navbarRef.current.offsetHeight;
+        const reducedHeight = newIsMobile ? actualHeight - 2 : actualHeight - 1;
+        setSpacerHeight(Math.max(reducedHeight, 0)); // Säkerställ att vi inte får negativ höjd
+      }
     };
 
     window.addEventListener('resize', handleResize);
+
+    // Kör handleResize när komponenten mountas för initial beräkning
+    setTimeout(handleResize, 100); // Kort timeout för att säkerställa att DOM har uppdaterats
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 w-full bg-[#F8F4EC] px-4 py-4 z-40 shadow-sm md:py-6">
+      <nav
+        ref={navbarRef}
+        className="fixed top-0 left-0 right-0 w-full bg-[#F8F4EC] px-6 py-3 z-40 shadow-sm md:py-6"
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Vänster del - hamburgermenyn på mobil, länkarna på desktop */}
           <div className="flex-1">
@@ -58,7 +77,7 @@ const Navbar: React.FC = () => {
             <Link to="/" className="text-center">
               {isMobile ? (
                 // Mobil-version av logotypen
-                <h1 className="flex flex-col justify-center items-center leading-none">
+                <h1 className="flex flex-col justify-center items-center">
                   <span className="text-[20px] tracking-[4.37px]">GRAPE</span>
                   <span className="text-[12px] tracking-[2.66px] -mt-1">
                     CERAMICS
@@ -91,12 +110,13 @@ const Navbar: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Cart Page */}
-        <CartPage isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       </nav>
 
-      <div className={`w-full ${isMobile ? 'h-16' : 'h-28'}`}></div>
+      {/* Dynamisk rymdhållare med justerad höjd för att visa mer innehåll */}
+      <div style={{ width: '100%', height: `${spacerHeight}px` }}></div>
+
+      {/* Cart Page */}
+      <CartPage isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 };
