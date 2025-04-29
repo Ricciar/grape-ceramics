@@ -2,7 +2,7 @@ import React, { createContext, useState, ReactNode } from 'react';
 
 // Definiera en typ för produkten i varukorgen
 export interface CartItem {
-  id: string | number;
+  id: number;
   name: string;
   price: string;
   quantity: number;

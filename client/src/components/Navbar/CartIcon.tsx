@@ -2,20 +2,11 @@ import React from 'react';
 import useCart from '../Cart/UseCart';
 import shoppingBagIcon from '../../assets/shoppingBagIcon.svg';
 import shoppingBagIconGrey from '../../assets/shoppingBagIconGrey.svg';
-
-// Typ för varukorgens objekt (anpassa efter din CartItem-typ i CartContext)
-export interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  quantity: number;
-}
+import { CartItem } from '../Cart/CartContext';
 
 const CartIcon: React.FC = () => {
-  // Använd `useCart` hooken för att hämta varukorgens innehåll
   const { cart } = useCart();
 
-  // Beräkna det totala antalet varor i varukorgen
   const totalItems = cart.reduce(
     (sum: number, item: CartItem) => sum + item.quantity,
     0
@@ -24,27 +15,20 @@ const CartIcon: React.FC = () => {
   return (
     <div className="relative flex items-center">
       {/* Varukorgsikon */}
-      <div
-        className="w-6 h-6 bg-no-repeat bg-center bg-contain"
-        style={{
-          backgroundImage: `url(${shoppingBagIcon})`,
-        }}
+      <img
+        src={shoppingBagIcon}
+        alt="Shopping bag"
+        className="w-6 h-6 object-contain"
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundImage = `url(${shoppingBagIconGrey})`;
+          e.currentTarget.src = shoppingBagIconGrey;
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundImage = `url(${shoppingBagIcon})`;
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.backgroundImage = `url(${shoppingBagIconGrey})`;
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.backgroundImage = `url(${shoppingBagIcon})`;
+          e.currentTarget.src = shoppingBagIcon;
         }}
         role="button"
-        tabIndex={0} // Gör elementet fokuserbart för tillgänglighet
+        tabIndex={0}
         aria-label="Shopping bag"
-      ></div>
+      />
 
       {/* Totalantalet varor */}
       {totalItems > 0 && (
