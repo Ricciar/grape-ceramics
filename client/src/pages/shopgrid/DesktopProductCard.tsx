@@ -10,8 +10,8 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({
     <div className="cursor-pointer" onClick={() => onClick(product.id)}>
       <div className="w-full h-[450px] bg-gray-100 overflow-hidden">
         <img
-          src={product.images.at(0)}
-          alt={product.name}
+          src={product.images[0].src}
+          alt={product.images[0].alt}
           loading="lazy"
           className="w-full h-full object-cover"
         />
