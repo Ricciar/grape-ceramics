@@ -65,10 +65,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
   const currentImage = hasImages ? product.images[currentImageIndex] : null;
 
   return (
-    <div className="flex flex-col items-center md:flex-row md:justify-around md:gap-[11rem]">
-      <div className="w-full md:w-1/2 flex flex-col">
+    <div className="flex flex-col items-center lg:flex-row lg:justify-around lg:gap-[11rem]">
+      <div className="w-full lg:w-1/2 flex flex-col">
         {/* Huvudbild */}
-        <div className="relative w-full md:w-[600px] h-[450px] md:h-[645px] overflow-hidden">
+        <div className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden">
           {currentImage ? (
             <img
               src={currentImage.src}
@@ -93,7 +93,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
         )}
       </div>
       {/* Produktinformation */}
-      <div className="flex flex-col items-center w-full md:w-1/2 md:items-start max-w-[290px] md:max-w-none font-light tracking-[2.85px]">
+      <div className="flex flex-col items-center w-full lg:w-1/2 lg:items-start max-w-[290px] lg:max-w-none font-light tracking-[2.85px]">
         <h1
           id={`product-title-${product.id}`}
           className="font-sans text-[24px] font-light tracking-[4.56px] mt-5"
