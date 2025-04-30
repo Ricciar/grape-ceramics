@@ -20,7 +20,7 @@ const ProductNav: React.FC<ProductNavProps> = ({ loading = false }) => {
   return (
     <div className="py-6">
       <Link
-        to="/shop"
+        to="/butik"
         className="flex items-center space-x-2 text-[#575757] hover:text-gray-900 transition-colors"
       >
         <span className="text-lg">←</span>
