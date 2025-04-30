@@ -13,28 +13,36 @@ import ProductWrapper from './pages/ProductWrapper';
 import MainPage from './pages/MainPage/MainPage';
 import ShopGrid1 from './pages/shopgrid/ShopGrid1';
 import ContactPage from './pages/Contact/ContactPage';
+import Footer from './components/Footer/Footer';
 
 function App(): JSX.Element {
   return (
     <CartProvider>
       <Router>
         <Navbar />
-        <Routes>
-          {/* Route för startsidan */}
-          <Route path="/" element={<MainPage />} />
 
-          {/* Route för kurser */}
-          {/* <Route path="/kurser" element={<CoursesPage />} /> */}
+        <main>
+          <Routes>
+            {/* Route för startsidan */}
+            <Route path="/" element={<MainPage />} />
 
-          {/* Route för butik */}
-          <Route path="/butik" element={<ShopGrid1 />} />
+            {/* Route för kurser */}
+            {/* <Route path="/kurser" element={<CoursesPage />} /> */}
 
-          {/* Route för produktsidan */}
-          <Route path="/product/:id" element={<ProductWrapper />} />
+            {/* Route för butik */}
+            <Route path="/butik" element={<ShopGrid1 />} />
 
-          {/* Route för kontakt */}
-          <Route path="/kontakt" element={<ContactPage />} />
-        </Routes>
+            {/* Route för produktsidan */}
+            <Route path="/product/:id" element={<ProductWrapper />} />
+
+            {/* Route för kontakt */}
+            <Route path="/kontakt" element={<ContactPage />} />
+
+            {/* Route för 404-sidan */}
+            {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+          </Routes>
+        </main>
+        <Footer />
       </Router>
     </CartProvider>
   );
