@@ -4,7 +4,13 @@ import DOMPurify from 'dompurify';
 import { Product } from '../shopgrid/types';
 import SkeletonCourseProduct from './SkeletonCourseProduct';
 
-const CourseProductCard = ({ product }: { product: Product }) => {
+const CourseProductCard = ({
+  product,
+  isSoldOut = false,
+}: {
+  product: Product;
+  isSoldOut?: boolean;
+}) => {
   // Hjälpfunktion för att hämta alt-text för produktbilden
   const getAltText = (product: Product): string => {
     if (product.images.length > 0) {
@@ -17,7 +23,7 @@ const CourseProductCard = ({ product }: { product: Product }) => {
     <div className="flex flex-col w-full">
       {/* Produktbild med beskrivning overlay */}
       <div
-        className="relative w-full h-[236px] md:h-[321px] overflow-hidden"
+        className={`relative w-full h-[236px] md:h-[321px] overflow-hidden ${isSoldOut ? 'opacity-70' : ''}`}
         style={{
           backgroundImage:
             product.images.length > 0
@@ -30,6 +36,12 @@ const CourseProductCard = ({ product }: { product: Product }) => {
         }}
         aria-label={getAltText(product)}
       >
+        {/* Visa "SLUTSÅLD"-etikett om produkten är slutsåld */}
+        {isSoldOut && (
+          <div className="absolute top-0 left-0 bg-gray-900 text-white px-2 py-1 text-sm font-medium z-20">
+            SLUTSÅLD
+          </div>
+        )}
         {product.images.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
             <span className="text-gray-500">Ingen bild tillgänglig</span>
@@ -62,11 +74,18 @@ const CourseProductCard = ({ product }: { product: Product }) => {
 
       {/* Produkt namn och pris */}
       <div className="mt-2 md:mt-4 text-center">
-        <h3 className="text-[16px] uppercase tracking-widest mb-1">
+        <h3 className="text-[16px] uppercase tracking-custom-wide-2">
           {product.name}
         </h3>
         {product.price && (
-          <p className="text-sm tracking-wider">{product.price} SEK</p>
+          <p
+            className={`text-sm tracking-wider ${isSoldOut ? 'line-through text-gray-500' : ''}`}
+          >
+            {product.price} SEK
+            {isSoldOut && (
+              <span className="ml-2 text-gray-700 no-underline">Slutsåld</span>
+            )}
+          </p>
         )}
       </div>
     </div>
@@ -85,17 +104,18 @@ const CourseProducts: React.FC = () => {
 
         const courseTags = ['courses-one', 'courses-two', 'courses-three'];
 
-        // Hämta ALLA produkter i ett enda anrop, som i MainPage
-        const response = await axios.get('/api/products', {
+        // Steg 1: Hämta alla produkter med grundläggande information
+        const listResponse = await axios.get('/api/products', {
           params: {
-            per_page: 100, // Hämta upp till 100 produkter
+            per_page: 100,
+            _fields: 'id,name,images,tags',
           },
         });
 
-        // Extrahera produkter från svaret
-        const allProducts = response.data.products || [];
+        const allProducts = listResponse.data.products || [];
+        console.log('Alla produkter hämtade:', allProducts.length);
 
-        // Skapa en array för att lagra produkter i rätt ordning
+        // Steg 2: Filtrera ut produkter med kurstaggar
         const orderedProductsArray: Product[] = [];
 
         // För varje tagg, hitta matchande produkt och lägg till i arrayen
@@ -113,19 +133,20 @@ const CourseProducts: React.FC = () => {
 
           if (product) {
             orderedProductsArray.push(product);
-            console.log(`Found product for ${tagSlug}:`, product.name);
+            console.log(`Hittade produkt för ${tagSlug}:`, product.name);
           } else {
-            console.log(`No product found for ${tagSlug}`);
+            console.log(`Ingen produkt hittades för ${tagSlug}`);
           }
         });
 
-        // Om vi inte hittade några specifika kurser, använd fallback
+        // Filtrera även andra kursprodukter som fallback
+        let coursesProducts: Product[] = [];
         if (orderedProductsArray.length === 0) {
-          console.log('No specific course products found, trying fallback...');
+          console.log('Inga specifika kurser hittades, använder fallback...');
 
           // Filtrera alla produkter med courses-taggar
           const uniqueProductIds = new Set();
-          const coursesProducts = allProducts.filter((p: Product) => {
+          coursesProducts = allProducts.filter((p: Product) => {
             if (
               p.tags &&
               p.tags.some((t) => t.slug && t.slug.startsWith('courses-'))
@@ -138,17 +159,51 @@ const CourseProducts: React.FC = () => {
             }
             return false;
           });
-
           console.log(
-            `Found ${coursesProducts.length} products with courses- tags as fallback`
+            `Hittade ${coursesProducts.length} produkter med courses-taggar som fallback`
           );
-          setCourseProducts(coursesProducts);
-        } else {
-          console.log('Final courses array:', orderedProductsArray);
-          setCourseProducts(orderedProductsArray);
         }
+
+        // Steg 3: Hämta detaljerad information för varje kursprodukt
+        const productsToFetch =
+          orderedProductsArray.length > 0
+            ? orderedProductsArray
+            : coursesProducts;
+
+        console.log(
+          `Hämtar detaljerad information för ${productsToFetch.length} produkter...`
+        );
+
+        if (productsToFetch.length === 0) {
+          // Inga kursprodukter hittades
+          setCourseProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        // Hämta detaljerad info med Promise.all
+        const detailedProducts = await Promise.all(
+          productsToFetch.map((p) =>
+            axios
+              .get(`/api/products/${p.id}`)
+              .then((res) => res.data)
+              .catch((error) => {
+                console.error(`Fel vid hämtning av produkt ${p.id}:`, error);
+                // Returnera den grundläggande produkten om detaljerad hämtning misslyckas
+                return p;
+              })
+          )
+        );
+
+        console.log(
+          'Detaljerad kursinformation hämtad:',
+          detailedProducts.length
+        );
+
+        // Sätt kursproduktdata
+        setCourseProducts(detailedProducts);
       } catch (err) {
-        console.error('Error fetching course products:', err);
+        console.error('Fel vid hämtning av kursprodukter:', err);
         setError('Det gick inte att hämta kurserna.');
       } finally {
         setLoading(false);
@@ -214,10 +269,12 @@ const CourseProducts: React.FC = () => {
                 <CourseProductCard
                   key={`product-mobile-${courseProducts[0].id}`}
                   product={courseProducts[0]}
+                  isSoldOut={courseProducts[0].stock_status === 'outofstock'}
                 />
                 <CourseProductCard
                   key={`product-mobile-${courseProducts[1].id}`}
                   product={courseProducts[1]}
+                  isSoldOut={courseProducts[1].stock_status === 'outofstock'}
                 />
               </div>
             )}
@@ -228,6 +285,7 @@ const CourseProducts: React.FC = () => {
                 <CourseProductCard
                   key={`product-mobile-${courseProducts[2].id}`}
                   product={courseProducts[2]}
+                  isSoldOut={courseProducts[2].stock_status === 'outofstock'}
                 />
               </div>
             )}
@@ -245,6 +303,7 @@ const CourseProducts: React.FC = () => {
             <CourseProductCard
               key={`product-desktop-${product.id}`}
               product={product}
+              isSoldOut={product.stock_status === 'outofstock'}
             />
           ))
         ) : (
