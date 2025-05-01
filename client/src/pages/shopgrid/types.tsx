@@ -24,10 +24,10 @@ export interface Product {
 }
 
 export interface ProductImages {
-  id: number;
-  name: string;
-  alt: string;
-  src: string;
+  id?: number;
+  name?: string;
+  alt?: string;
+  src?: string;
 }
 
 export interface ProductCardProps {
