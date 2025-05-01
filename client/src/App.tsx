@@ -9,6 +9,7 @@ import {
 import { CartProvider } from './components/Cart/CartContext';
 import Navbar from './components/Navbar/Navbar';
 //import ShopGrid from './pages/shopgrid/ShopGrid';
+import CoursesPage from './pages/Courses/CoursesPage';
 import ProductWrapper from './pages/ProductWrapper';
 import MainPage from './pages/MainPage/MainPage';
 import ShopGrid1 from './pages/shopgrid/ShopGrid1';
@@ -27,7 +28,7 @@ function App(): JSX.Element {
             <Route path="/" element={<MainPage />} />
 
             {/* Route för kurser */}
-            {/* <Route path="/kurser" element={<CoursesPage />} /> */}
+            {<Route path="/kurser" element={<CoursesPage />} />}
 
             {/* Route för butik */}
             <Route path="/butik" element={<ShopGrid1 />} />
