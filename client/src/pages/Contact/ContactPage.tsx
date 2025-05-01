@@ -79,9 +79,6 @@ const ContactPage: React.FC = () => {
             }}
           />
         )}
-
-        {/* You can add additional contact components here */}
-        {/* For example, a contact form, map, or other contact details */}
       </div>
     </div>
   );
