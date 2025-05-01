@@ -117,7 +117,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
 
   return (
     <>
-      <div className="flex flex-col items-center lg:flex-row lg:justify-around lg:gap-[11rem]">
+      <div className="flex flex-col items-center lg:flex-row lg:justify-around lg:gap-[11rem] mb-[1px]">
         <div className="w-full lg:w-1/2 flex flex-col">
           {/* Huvudbild */}
           <div className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden">

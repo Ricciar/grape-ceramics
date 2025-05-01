@@ -24,10 +24,10 @@ export interface Product {
 }
 
 export interface ProductImages {
-  id?: number;
-  name?: string;
-  alt?: string;
-  src?: string;
+  id: number;
+  name: string;
+  alt: string;
+  src: string;
 }
 
 export interface ProductCardProps {
@@ -52,4 +52,10 @@ export interface FeaturedProducts {
   four: Product | null;
   five: Product | null;
   six: Product | null;
+}
+
+export interface FeaturedCourses {
+  one: Product | null;
+  two: Product | null;
+  three: Product | null;
 }
