@@ -7,9 +7,11 @@ import SkeletonCourseProduct from './SkeletonCourseProduct';
 const CourseProductCard = ({
   product,
   isSoldOut = false,
+  isFullWidthMobile = false,
 }: {
   product: Product;
   isSoldOut?: boolean;
+  isFullWidthMobile?: boolean;
 }) => {
   // Hjälpfunktion för att hämta alt-text för produktbilden
   const getAltText = (product: Product): string => {
@@ -23,7 +25,7 @@ const CourseProductCard = ({
     <div className="flex flex-col w-full">
       {/* Produktbild med beskrivning overlay */}
       <div
-        className={`relative w-full h-[236px] md:h-[321px] overflow-hidden ${isSoldOut ? 'opacity-70' : ''}`}
+        className={`relative w-full ${isFullWidthMobile ? 'h-[390px]' : 'h-[236px]'} md:h-[321px] overflow-hidden ${isSoldOut ? 'opacity-70' : ''}`}
         style={{
           backgroundImage:
             product.images.length > 0
@@ -36,7 +38,7 @@ const CourseProductCard = ({
         }}
         aria-label={getAltText(product)}
       >
-        {/* Visa "SLUTSÅLD"-etikett om produkten är slutsåld */}
+        {/* Visa "Slutsåld"-etikett om produkten är slutsåld */}
         {isSoldOut && (
           <div className="absolute bottom-3 left-3 bg-custom-gray text-white px-2 py-1 text-sm font-light z-20 tracking-custom-wide-2">
             Slutsåld
@@ -44,7 +46,9 @@ const CourseProductCard = ({
         )}
         {product.images.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-            <span className="text-gray-500">Ingen bild tillgänglig</span>
+            <span className="text-gray-500 text-xs font-light -tracking-custom-wide-xs">
+              Ingen bild tillgänglig
+            </span>
           </div>
         )}
 
@@ -53,10 +57,13 @@ const CourseProductCard = ({
           className="block absolute inset-0 group focus:outline-none"
           aria-label={`Visa produkt: ${product.name}`}
         >
-          {/* Beskrivning Overlay - Visas alltid om short_description finns */}
-          <div className="absolute inset-0 flex justify-center p-4 bg-black bg-opacity-20 transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0">
+          {/* Overlay - Visas alltid för produktnamn, och innehållet "short_descritpion" om det finns */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center p-4 bg-black bg-opacity-20 
+            ${!isSoldOut ? 'transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0' : ''}`}
+          >
             <div className="text-white font-light font-sans tracking-custom-wide-xs">
-              <h3 className="text-[31px] text-[#F1F1F1] tracking-widest mb-2">
+              <h3 className="text-[31px] tracking-widest mb-2">
                 {product.name}
               </h3>
               {product.short_description && (
@@ -73,7 +80,7 @@ const CourseProductCard = ({
       </div>
 
       {/* Produkt namn och pris */}
-      <div className="mt-2 ml-3 flex flex-row justify-between md:mt-4 ">
+      <div className="mt-2 ml-3 mb-2 flex flex-row justify-between md:mt-4 md:mb-4 mr-3">
         <h3 className="text-xs font-sans font-light uppercase tracking-custom-wide-xs">
           {product.name}
         </h3>
@@ -283,6 +290,7 @@ const CourseProducts: React.FC = () => {
                   key={`product-mobile-${courseProducts[2].id}`}
                   product={courseProducts[2]}
                   isSoldOut={courseProducts[2].stock_status === 'outofstock'}
+                  isFullWidthMobile={true}
                 />
               </div>
             )}
