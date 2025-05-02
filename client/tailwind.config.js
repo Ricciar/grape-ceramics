@@ -13,7 +13,8 @@ export default {
         'custom-gray': '#272727', // För knappens ram, text, och hover-bakgrund
       },
       letterSpacing: {
-        'custom-wide': '3.04px', // Skapar en ny klass för letter-spacing
+        'custom-wide-xs': '2.28px',
+        'custom-wide': '3.04px',
         'custom-wide-2': '4.8px',
       },
     },

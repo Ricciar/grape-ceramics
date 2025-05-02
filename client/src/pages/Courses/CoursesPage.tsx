@@ -38,8 +38,8 @@ const CourseProductCard = ({
       >
         {/* Visa "SLUTSÅLD"-etikett om produkten är slutsåld */}
         {isSoldOut && (
-          <div className="absolute top-0 left-0 bg-gray-900 text-white px-2 py-1 text-sm font-medium z-20">
-            SLUTSÅLD
+          <div className="absolute bottom-3 left-3 bg-custom-gray text-white px-2 py-1 text-sm font-light z-20 tracking-custom-wide-2">
+            Slutsåld
           </div>
         )}
         {product.images.length === 0 && (
@@ -54,37 +54,34 @@ const CourseProductCard = ({
           aria-label={`Visa produkt: ${product.name}`}
         >
           {/* Beskrivning Overlay - Visas alltid om short_description finns */}
-          {product.short_description && (
-            <div className="absolute inset-0 flex items-center justify-center p-4 bg-black bg-opacity-20 transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0">
-              <div className="text-white font-light font-sans text-center tracking-custom-wide-2">
-                <h3 className="text-[16px] uppercase tracking-widest mb-2">
-                  {product.name}
-                </h3>
+          <div className="absolute inset-0 flex justify-center p-4 bg-black bg-opacity-20 transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0">
+            <div className="text-white font-light font-sans tracking-custom-wide-xs">
+              <h3 className="text-[31px] text-[#F1F1F1] tracking-widest mb-2">
+                {product.name}
+              </h3>
+              {product.short_description && (
                 <div
                   className="text-sm"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(product.short_description),
                   }}
                 />
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </a>
       </div>
 
       {/* Produkt namn och pris */}
-      <div className="mt-2 md:mt-4 text-center">
-        <h3 className="text-[16px] uppercase tracking-custom-wide-2">
+      <div className="mt-2 ml-3 flex flex-row justify-between md:mt-4 ">
+        <h3 className="text-xs font-sans font-light uppercase tracking-custom-wide-xs">
           {product.name}
         </h3>
         {product.price && (
           <p
-            className={`text-sm tracking-wider ${isSoldOut ? 'line-through text-gray-500' : ''}`}
+            className={`font-sans font-light text-xs tracking-custom-wide-xs ${isSoldOut ? 'line-through text-gray-500' : ''}`}
           >
             {product.price} SEK
-            {isSoldOut && (
-              <span className="ml-2 text-gray-700 no-underline">Slutsåld</span>
-            )}
           </p>
         )}
       </div>
@@ -219,7 +216,7 @@ const CourseProducts: React.FC = () => {
         <p>{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          className="mt-4 px-4 py-2 bg-gray-800 hover:bg-gray-300"
         >
           Försök igen
         </button>
@@ -234,7 +231,7 @@ const CourseProducts: React.FC = () => {
         {/* Mobile Layout - Laddningsskelett med 2+1 struktur */}
         <div className="md:hidden">
           {/* Första raden - 2 produkter sida vid sida */}
-          <div className="grid grid-cols-2 gap-[2px] mb-6">
+          <div className="grid grid-cols-2 gap-[2px]">
             <SkeletonCourseProduct key="skeleton-mobile-0" />
             <SkeletonCourseProduct key="skeleton-mobile-1" />
           </div>
@@ -265,7 +262,7 @@ const CourseProducts: React.FC = () => {
           <>
             {/* Första raden - 2 produkter sida vid sida */}
             {courseProducts.length >= 2 && (
-              <div className="grid grid-cols-2 gap-[2px] mb-6">
+              <div className="grid grid-cols-2 gap-[2px]">
                 <CourseProductCard
                   key={`product-mobile-${courseProducts[0].id}`}
                   product={courseProducts[0]}
