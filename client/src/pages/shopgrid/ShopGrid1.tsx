@@ -12,7 +12,7 @@ const ShopGrid1: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [perPage] = useState(12); // Antal produkter per sida
+  const [perPage] = useState(7);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -22,13 +22,17 @@ const ShopGrid1: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
+        console.log('Fetching products for page:', page, 'per page:', perPage);
         const response = await axios.get(
           `/api/products?page=${page}&per_page=${perPage}`
         );
 
-        setProducts(response.data.products);
-        setFilteredProducts(response.data.products);
+        setProducts(response.data.products || []);
+        setFilteredProducts(response.data.products || []);
         setTotalPages(response.data.totalPages || 1);
+
+        console.log('Products loaded:', filteredProducts.length);
+        console.log('Total pages:', totalPages);
       } catch (error) {
         console.error('Error fetching products: ', error);
       } finally {
@@ -44,21 +48,27 @@ const ShopGrid1: React.FC = () => {
   };
 
   const handleFilterProducts = (newFilteredProducts: Product[]) => {
-    setFilteredProducts(newFilteredProducts); // Uppdatera produktlistan med de filtrerade produkterna
+    setFilteredProducts(newFilteredProducts);
+    setPage(1);
   };
 
   // Funktion som skapar en array för skeleton placeholders
-  const mobileSkeletonIndices = Array.from({ length: 7 }, (_, index) => index);
-  const desktopSkeletonIndices = Array.from({ length: 9 }, (_, index) => index);
+  const mobileSkeletonIndices = Array.from(
+    { length: perPage },
+    (_, index) => index
+  );
+  const desktopSkeletonIndices = Array.from(
+    { length: perPage },
+    (_, index) => index
+  );
 
   const renderPagination = () => {
-    if (totalPages > 1) return null;
-
-    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    // Visa inte pagination om det bara finns en sida
+    if (totalPages <= 1) return null;
 
     return (
       <div className="flex justify-center items-center my-8">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 font-sans font-light">
           {/* Vänster pil */}
           <button
             onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
@@ -70,21 +80,33 @@ const ShopGrid1: React.FC = () => {
           </button>
 
           {/* Sidnummer */}
-          {pages.map((pageNum) => (
-            <button
-              key={pageNum}
-              onClick={() => setPage(pageNum)}
-              className={`w-10 h-10 flex items-center justify-center ${
-                pageNum === page
-                  ? 'text-black'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-              aria-label={`Gå till sida ${pageNum}`}
-              aria-current={pageNum === page ? 'page' : undefined}
-            >
-              {pageNum}
-            </button>
-          ))}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((pageNum) => {
+              return (
+                pageNum === 1 ||
+                pageNum === totalPages ||
+                Math.abs(pageNum - page) <= 1
+              );
+            })
+            .map((pageNum, index, filteredPages) => (
+              <React.Fragment key={pageNum}>
+                {index > 0 && filteredPages[index - 1] !== pageNum - 1 && (
+                  <span className="text-gray-400">...</span>
+                )}
+                <button
+                  onClick={() => setPage(pageNum)}
+                  className={`w-10 h-10 flex items-center justify-center ${
+                    pageNum === page
+                      ? 'text-black'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  aria-label={`Gå till sida ${pageNum}`}
+                  aria-current={pageNum === page ? 'page' : undefined}
+                >
+                  {pageNum}
+                </button>
+              </React.Fragment>
+            ))}
 
           {/* Höger pil */}
           <button
