@@ -62,7 +62,7 @@ const NavMenu: React.FC = () => {
       {/* Navigationslänkar som visas när menyn är öppen */}
       {isAnimating && (
         <div
-          className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-14 z-50 transition-all duration-300 ease-in-out"
+          className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-10 z-50 transition-all duration-300 ease-in-out"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(-10px)',
@@ -88,6 +88,13 @@ const NavMenu: React.FC = () => {
             onClick={closeMenu}
           >
             KONTAKT
+          </Link>
+          <Link
+            to="/faq"
+            className="py-4 text-stone-800 hover:text-stone-600"
+            onClick={closeMenu}
+          >
+            FAQ
           </Link>
         </div>
       )}

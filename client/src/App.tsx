@@ -15,6 +15,7 @@ import MainPage from './pages/MainPage/MainPage';
 import ShopGrid1 from './pages/shopgrid/ShopGrid1';
 import ContactPage from './pages/Contact/ContactPage';
 import Footer from './components/Footer/Footer';
+import FAQPage from './pages/FAQ/FAQPage';
 
 function App(): JSX.Element {
   return (
@@ -38,6 +39,9 @@ function App(): JSX.Element {
 
             {/* Route för kontakt */}
             <Route path="/kontakt" element={<ContactPage />} />
+
+            {/* Route för FAQ */}
+            <Route path="/faq" element={<FAQPage />} />
 
             {/* Route för 404-sidan */}
             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
