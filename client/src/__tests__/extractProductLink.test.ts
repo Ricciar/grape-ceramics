@@ -8,6 +8,14 @@ describe('extractProductLink', () => {
     excerpt: { rendered: '' },
     slug: 'min-test-post',
     featured_media: 0,
+    date: '2023-10-01T12:00:00',
+    link: 'https://example.com/min-test-post',
+    _links: {
+      self: [{ href: 'https://example.com/wp-json/wp/v2/posts/1' }],
+      'wp:featuredmedia': [
+        { href: 'https://example.com/wp-json/wp/v2/media/0' },
+      ],
+    },
   };
 
   it('returnerar produktlänk från <a>-tagg', () => {
