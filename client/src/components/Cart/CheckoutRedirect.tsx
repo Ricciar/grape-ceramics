@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from '../Button';
 import axios from 'axios';
-import { CartItem } from '../Navbar/CartIcon';
+import { CartItem } from '../Cart/CartContext';
 
 interface CheckoutRedirectProps {
   cart: CartItem[]; // Varukorgen
