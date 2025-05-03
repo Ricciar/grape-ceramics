@@ -5,6 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "build": "cd client && npm install && npm run build",
+    "deploy": "netlify deploy --prod",
     "test": "jest",
     "test:watch": "jest --watch"
   },

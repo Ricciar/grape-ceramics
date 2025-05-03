@@ -16,10 +16,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
+      '/.netlify/functions': {
         target:
           mode === 'production'
-            ? '/.netlify/functions' // Produktion API
+            ? 'https://grapeceramics.netlify.app' // Produktion API
             : 'http://localhost:5000', // Lokal development
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
