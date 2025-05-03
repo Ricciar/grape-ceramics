@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/frontend/' : '/',
+  base: mode === 'production' ? '/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => ({
       '/api': {
         target:
           mode === 'production'
-            ? 'https://your-api-server.com' // Production API
-            : 'http://localhost:5000', // Local development
+            ? '/.netlify/functions' // Produktion API
+            : 'http://localhost:5000', // Lokal development
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },

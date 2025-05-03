@@ -1,0 +1,34 @@
+name: Bygg och Deploya till Loopia
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hämta kod
+        uses: actions/checkout@v3
+
+      - name: Installera Node.js
+        uses: actions/setup-node@v3
+
+      - name: Installera dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Bygg React-appen
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Ladda upp till Loopia
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ftp.loopia.se
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: frontend/dist/
+          server-dir: /public_html/
