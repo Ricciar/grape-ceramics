@@ -164,7 +164,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
                 <span>
                   I lager{' '}
                   {product.stock_quantity !== null
-                    ? `${product.stock_quantity} pcs`
+                    ? `${product.stock_quantity}`
                     : ''}
                   st
                 </span>
