@@ -1,34 +1,38 @@
-name: Bygg och Deploya till Loopia
+name: Deploy to Netlify
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Hämta kod
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Installera Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
-
-      - name: Installera dependencies
-        run: |
-          cd client
-          npm install
-
-      - name: Bygg React-appen
-        run: |
-          cd client
-          npm run build
-
-      - name: Ladda upp till Loopia
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ftp.loopia.se
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: client/dist/
-          server-dir: /public_html/
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build frontend and backend functions
+        run: |
+          npm run build
+          npm run build:functions
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: ./client/dist
+          functions-dir: ./server/netlify/functions/dist
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

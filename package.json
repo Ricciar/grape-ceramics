@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
     "build": "cd client && npm install && npm run build",
-    "deploy": "netlify deploy --prod",
+    "build:functions": "tsc -p server/netlify/functions",
+    "build:all": "npm run build && npm run build:functions",
+    "deploy": "npm run build:all && netlify deploy --prod",
+    "netlify:dev": "netlify dev",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -26,5 +29,8 @@
     "prettier": "3.4.2",
     "ts-jest": "^29.2.5",
     "typescript-eslint": "^8.21.0"
+  },
+  "dependencies": {
+    "netlify-cli": "^21.4.2"
   }
 }
