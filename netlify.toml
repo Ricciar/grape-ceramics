@@ -9,9 +9,9 @@
 
 # API-omdirigeringar för Express-app
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api"
-  status = 200
+from = "/api/*"
+to = "/.netlify/functions/api"
+status = 200
 
 # SPA fallback
 [[redirects]]
