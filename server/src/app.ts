@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { config } from './config/environment.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import storeRoutes from './routes/storeRoutes.js';
 import pageRoutes from './routes/pageRoutes.js';
@@ -20,6 +21,17 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+
+/** TEMP: Testroute */
+app.get('/test-env', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    nodeEnv: process.env.NODE_ENV,
+    apiUrl: config.woocommerceApiUrl,
+    consumerKeySet: !!config.woocommerceConsumerKey,
+    consumerSecretSet: !!config.woocommerceConsumerSecret,
+  });
+});
 
 // Health check route
 app.get('/health', (req, res) => {
