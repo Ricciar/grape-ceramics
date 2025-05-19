@@ -30,6 +30,11 @@ app.get('/health', (req, res) => {
 app.use('/api', storeRoutes); // Woo Commerce
 app.use('/api/pages', pageRoutes); // WorPress sidor
 
+app.use((req, res, next) => {
+  console.log('INCOMING:', req.method, req.originalUrl);
+  next();
+});
+
 // Catch-all route för odefinierade endpoints
 app.use('*', (req, res) => {
   res.status(404).json({
