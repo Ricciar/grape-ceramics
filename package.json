@@ -7,8 +7,7 @@
   "scripts": {
     "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
     "build": "cd client && npm install && npm run build",
-    "build:functions": "tsc -p server/netlify/functions",
-    "build:all": "npm run build && npm run build:functions",
+    "build:all": "npm run build",
     "deploy": "npm run build:all && netlify deploy --prod",
     "netlify:dev": "netlify dev",
     "test": "jest",
