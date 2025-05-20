@@ -25,13 +25,12 @@ jobs:
       - name: Build frontend and backend functions
         run: |
           npm run build
-          npm run build:functions
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2
         with:
           publish-dir: ./client/dist
-          functions-dir: ./server/netlify/functions/dist
+          functions-dir: ./server/netlify/functions
           production-deploy: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
