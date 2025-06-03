@@ -7,6 +7,7 @@ import ProductCard from './ProductCard';
 import DesktopProductCard from './DesktopProductCard';
 import SkeletonProductCard from './SkeletonProductCard';
 import SkeletonDesktopProductCard from './SkeletonDesktopProductCard';
+import filtericon from '../../assets/filtericon.svg';
 
 const ShopGrid1: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
@@ -136,11 +137,7 @@ const ShopGrid1: React.FC = () => {
             className="pt-[12px] pb-[12px]"
             onClick={() => setIsFilterOpen(true)}
           >
-            <img
-              src="../src/assets/filtericon.svg"
-              alt="Öppna filtermenyn"
-              className="w-6 h-6"
-            />
+            <img src={filtericon} alt="Öppna filtermenyn" className="w-6 h-6" />
           </button>
         )}
       </div>
