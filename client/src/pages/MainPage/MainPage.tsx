@@ -231,7 +231,7 @@ const MainPage: React.FC = () => {
       {/* Mobile/Tablet Layout */}
       <div className="flex flex-col md:hidden">
         {/* Video Section */}
-        <div className="w-full bg-gray-100 h-full mt-[2px] z-0">
+        <div className="w-full bg-gray-100 h-full mt-[2px] mb-[2px] z-0">
           {videoContent ? (
             <div
               dangerouslySetInnerHTML={{
