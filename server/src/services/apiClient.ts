@@ -7,6 +7,7 @@ import {
   WooCommerceOrderRequest,
   WooCommerceOrderResponse,
 } from '../controllers/types/order.types.js';
+import NodeCache from 'node-cache';
 
 /**
  * ApiClient
@@ -23,6 +24,7 @@ export class ApiClient {
    * - consumerSecret
    */
   private readonly config: Config;
+  public cache: NodeCache = new NodeCache({ stdTTL: 300 });
 
   /**
    * Konstruktorn tar emot ett Config-objekt, vilket sedan lagras
@@ -35,6 +37,10 @@ export class ApiClient {
       woocommerceConsumerKey: config.woocommerceConsumerKey,
       woocommerceConsumerSecret: config.woocommerceConsumerSecret,
     };
+  }
+
+  public setCache(key: string, value: any) {
+    this.cache.set(key, value);
   }
 
   /**
@@ -67,7 +73,9 @@ export class ApiClient {
     page: number = 1,
     perPage: number = 12
   ): Promise<{ data: ProductResponse[]; headers: any }> {
-    return axios.get(`${this.config.apiUrl}products`, {
+    const start = Date.now();
+
+    const response = axios.get(`${this.config.apiUrl}products`, {
       ...this.getAuthConfig(),
       params: {
         page,
@@ -76,6 +84,11 @@ export class ApiClient {
           'id,name,price,description,short_description,images,categories,variations,attributes, tags',
       },
     });
+
+    const duration = Date.now() - start;
+    console.log(`WooCommerce API call (page ${page}) took ${duration}ms`);
+
+    return response;
   }
 
   /**
