@@ -7,6 +7,9 @@ publish = "client/dist"
 [functions]
 directory = "server/netlify/functions"
 
+[functions."preload"]
+schedule = "*/5 * * * *"
+
 # API-omdirigeringar för Express-app
 [[redirects]]
 from = "/api/*"
