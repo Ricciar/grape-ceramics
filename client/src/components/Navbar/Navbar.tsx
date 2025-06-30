@@ -20,17 +20,16 @@ const Navbar: React.FC = () => {
       // Mät faktisk höjd på navbaren
       if (navbarRef.current) {
         // Beräkna en mindre höjd för att visa mer innehåll under
-        // Du kan justera dessa värden för att få mer/mindre synligt innehåll
         const actualHeight = navbarRef.current.offsetHeight;
         const reducedHeight = newIsMobile ? actualHeight - 2 : actualHeight - 1;
-        setSpacerHeight(Math.max(reducedHeight, 0)); // Säkerställ att vi inte får negativ höjd
+        setSpacerHeight(Math.max(reducedHeight, 0));
       }
     };
 
     window.addEventListener('resize', handleResize);
 
     // Kör handleResize när komponenten mountas för initial beräkning
-    setTimeout(handleResize, 100); // Kort timeout för att säkerställa att DOM har uppdaterats
+    setTimeout(handleResize, 100);
 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -39,9 +38,11 @@ const Navbar: React.FC = () => {
     <>
       <nav
         ref={navbarRef}
+        role="navigation"
+        aria-label="Huvudnavigation"
         className="fixed top-0 left-0 right-0 w-full bg-[#F8F4EC] px-6 py-3 z-40 shadow-sm md:py-6"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between font-sans">
           {/* Vänster del - hamburgermenyn på mobil, länkarna på desktop */}
           <div className="flex-1">
             {/* Hamburgermenyn - bara synlig på mobil */}
@@ -69,12 +70,23 @@ const Navbar: React.FC = () => {
               >
                 KONTAKT
               </Link>
+              <Link
+                to="/faq"
+                className="text-black tracking-widest hover:text-gray-600"
+              >
+                FAQ
+              </Link>
             </div>
           </div>
 
           {/* Logo i mitten */}
           <div className="flex-1 flex justify-center items-center">
-            <Link to="/" className="text-center">
+            <Link
+              to="/"
+              className="text-center"
+              aria-label="Till startsidan"
+              title="Grape Ceramics Startsida"
+            >
               {isMobile ? (
                 // Mobil-version av logotypen
                 <h1 className="flex flex-col justify-center items-center">
@@ -84,7 +96,7 @@ const Navbar: React.FC = () => {
                   </span>
                 </h1>
               ) : (
-                // Desktop-version av logotypen (som på bilden)
+                // Desktop-version av logotypen
                 <div className="flex flex-col items-center justify-center">
                   <div className="mb-2">
                     <img
@@ -104,7 +116,7 @@ const Navbar: React.FC = () => {
             <button
               onClick={() => setIsCartOpen(true)}
               className="p-2"
-              aria-label="Open cart"
+              aria-label="Öppna kundvagn"
             >
               <CartIcon />
             </button>
