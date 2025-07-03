@@ -235,12 +235,12 @@ const MainPage: React.FC = () => {
           {videoContent ? (
             <div
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(videoContent),
+                __html: DOMPurify.sanitize(videoContent.html),
               }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-200 mt-[2px] z-0">
-              <p>Ingen video tillgänglig</p>
+              <p>Ingen video tillgänglig.</p>
             </div>
           )}
         </div>
@@ -328,12 +328,12 @@ const MainPage: React.FC = () => {
             <div
               className="w-full max-h-[400px] overflow-hidden"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(videoContent),
+                __html: DOMPurify.sanitize(videoContent.html),
               }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <p className="text-gray-900">Ingen video tillgänglig</p>
+              <p className="text-gray-900 font-sans">Ingen video tillgänglig</p>
             </div>
           )}
         </div>
