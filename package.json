@@ -5,11 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "dev": "netlify dev",
     "build": "cd client && npm install && npm run build",
     "build:all": "npm run build",
     "deploy": "npm run build:all && netlify deploy --prod",
-    "netlify:dev": "netlify dev",
     "test": "jest",
     "test:watch": "jest --watch"
   },
