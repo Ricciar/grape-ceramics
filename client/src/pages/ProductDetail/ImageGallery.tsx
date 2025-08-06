@@ -1,4 +1,5 @@
 import { ImageGalleryProps } from './types';
+import React from 'react';
 
 // Bildgalleri-komponent
 const ImageGallery = ({
@@ -10,13 +11,13 @@ const ImageGallery = ({
     {images.map((image, index) => (
       <div
         key={index}
-        className="relative min-w-[44px] h-11 md:w-[90px] md:h-[90px] cursor-pointer"
+        className="relative w-[64px] md:w-[90px] cursor-pointer"
         onClick={() => onImageClick(index)}
       >
         <img
           src={image}
           alt={`Miniatyrbild ${index + 1}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           loading="lazy"
         />
         {currentIndex === index && (
