@@ -5,6 +5,7 @@ import { WPPage } from './types';
 import { Product, FeaturedProducts } from '../shopgrid/types';
 import { extractVideoBlock } from '../../utils/extractVideoBlock';
 import { SkeletonMainPage } from './SkeletonMainPage';
+import { useIsAdminMode } from '../../hooks/useIsAdminMode';
 
 // Mobile/Tablet Product Card Component
 const MobileProductCard = ({
@@ -79,6 +80,12 @@ const DesktopProductCard = ({
 };
 
 const MainPage: React.FC = () => {
+  const isAdminMode = useIsAdminMode();
+
+  useEffect(() => {
+    console.log('🛠️ Admin mode (via effect):', isAdminMode);
+  }, [isAdminMode]);
+
   // State for content
   const [homePage, setHomePage] = useState<WPPage | null>(null);
 
@@ -193,28 +200,20 @@ const MainPage: React.FC = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return <SkeletonMainPage />;
-  }
-
-  if (error) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Försök igen
-        </button>
-      </div>
-    );
-  }
-
   // Extract video content from the home page
   const videoContent = homePage?.content?.rendered
     ? extractVideoBlock(homePage.content.rendered)
     : null;
+
+  // Console error if video is missing (for debugging)
+  useEffect(() => {
+    if (!videoContent) {
+      console.error('⚠️ Ingen video tillgänglig på startsidan.');
+    }
+    if (!infoSection) {
+      console.error('⚠️ Info-sektionen saknas.');
+    }
+  }, [videoContent, infoSection]);
 
   // Convert featured products to array for easier mapping
   const featuredProductsArray = [
@@ -226,11 +225,26 @@ const MainPage: React.FC = () => {
     featuredProducts.six,
   ].filter((product) => product !== null);
 
+  if (isAdminMode && featuredProductsArray.length < 6) {
+    console.warn(
+      `⚠️ Endast ${featuredProductsArray.length} av 6 utvalda produkter hittades.`
+    );
+  }
+
+  if (loading) {
+    return <SkeletonMainPage />;
+  }
+
+  if (error) {
+    return <div className="text-center p-8">{error}</div>;
+  }
+
   return (
     <div className="w-full max-w-full ml-[2px] mr-[2px] overflow-hidden">
       {/* Mobile/Tablet Layout */}
+
       <div className="flex flex-col md:hidden">
-        {/* Video Section */}
+        {/* VIDEO */}
         <div className="w-full bg-gray-100 h-full mt-[2px] mb-[2px] z-0">
           {videoContent ? (
             <div
@@ -238,11 +252,12 @@ const MainPage: React.FC = () => {
                 __html: DOMPurify.sanitize(videoContent.html),
               }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200 mt-[2px] z-0">
-              <p>Ingen video tillgänglig.</p>
+          ) : isAdminMode ? (
+            <div className="bg-white p-4 text-yellow-800 text-center">
+              ⚠️ Videoinnehåll saknas. Lägg till ett videoblock på startsidan i
+              WordPress.
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* First Row of Products */}
@@ -264,8 +279,8 @@ const MainPage: React.FC = () => {
         )}
 
         {/* Info Section */}
-        {infoSection && (
-          <div className="w-full bg-[#DFCABB] py-8 px-4 text-center h-[225px] md:h-[456px] flex items-center justify-center ml-[2px] mr-[2px] z-10">
+        {infoSection ? (
+          <div className="w-full bg-[#DFCABB] py-8 px-4 text-center min-h-[225px] md:h-[456px] flex items-center justify-center ml-[2px] mr-[2px] z-10">
             <div className="max-w-4xl mx-auto">
               <h2
                 className="text-2xl uppercase tracking-custom-wide-2 text-gray-800 mb-6"
@@ -281,7 +296,12 @@ const MainPage: React.FC = () => {
               />
             </div>
           </div>
-        )}
+        ) : isAdminMode ? (
+          <div className="bg-white p-4 text-yellow-800 text-center">
+            ⚠️ Info-sektionen saknas. Kontrollera att en sida med slug
+            &quot;info&quot; finns.
+          </div>
+        ) : null}
 
         {/* Second Row of Products (only mobile) */}
         {featuredProductsArray.length >= 4 && (
@@ -324,16 +344,14 @@ const MainPage: React.FC = () => {
       <div className="hidden md:flex md:flex-col">
         {/* Video Section */}
         <div className="w-full pt-[2px] pl-[2px] pr-[2px] z-0">
-          {videoContent ? (
-            <div
-              className="w-full max-h-[400px] overflow-hidden"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(videoContent.html),
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <p className="text-gray-900 font-sans">Ingen video tillgänglig</p>
+          {videoContent && (
+            <div className="w-full pt-[2px] pl-[2px] pr-[2px] z-0">
+              <div
+                className="w-full max-h-[400px] overflow-hidden"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(videoContent.html),
+                }}
+              ></div>
             </div>
           )}
         </div>
@@ -367,7 +385,7 @@ const MainPage: React.FC = () => {
 
         {/* Info Section */}
         {infoSection && (
-          <div className="w-full bg-[#DFCABB] py-8 px-4 tracking-custom-wide-2 text-center text-sans h-[456px] flex items-center justify-center z-10">
+          <div className="w-full bg-[#DFCABB] py-8 px-4 tracking-custom-wide-2 text-center text-sans min-h-[456px] flex items-center justify-center z-10">
             <div className="max-w-4xl mx-auto">
               <h2
                 className="text-[18px] uppercase tracking-custom-wider-2 text-gray-800 mb-6"
