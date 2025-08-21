@@ -1,5 +1,4 @@
 import { ImageGalleryProps } from './types';
-import React from 'react';
 
 // Bildgalleri-komponent
 const ImageGallery = ({

@@ -1,11 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import axios from 'axios';
-import DOMPurify from 'dompurify';
+import { isAbort } from '../../utils/abort';
+import { sanitizeWP } from '../../utils/sanitizeWP';
+import { getVideoPartsFromWP } from '../../utils/wordpress';
 import { WPPage } from './types';
 import { Product, FeaturedProducts } from '../shopgrid/types';
-import { extractVideoBlock } from '../../utils/extractVideoBlock';
 import { SkeletonMainPage } from './SkeletonMainPage';
 import { useIsAdminMode } from '../../hooks/useIsAdminMode';
+
+// ------------------------------------------------------------
+// Presentationskomponent: VideoBlock (återanvänds mobil/desktop)
+// ------------------------------------------------------------
+
+function VideoBlock({
+  src,
+  className = '',
+}: {
+  src: string;
+  className?: string;
+}) {
+  if (!src) return null;
+  return (
+    <div className={className}>
+      <video
+        key={src}
+        src={src}
+        controls
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="w-full h-auto block"
+      >
+        Din webbläsare stödjer inte HTML5 video.
+      </video>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------
+// Produktkort
+// ------------------------------------------------------------
 
 // Mobile/Tablet Product Card Component
 const MobileProductCard = ({
@@ -15,27 +52,20 @@ const MobileProductCard = ({
   product: Product;
   showDescription?: boolean;
 }) => {
-  // Helper function to get alt text from a product
-  const getAltText = (product: Product): string => {
-    if (product.images.length > 0) {
-      return product.images[0].alt || product.name;
-    }
-    return `Bild av ${product.name}`;
-  };
+  const mainImage = product.images?.[0];
+  const alt = mainImage?.alt || product.name || 'Produkt';
 
   return (
-    <div
-      className="relative w-full h-[236px] md:h-[321px] overflow-hidden"
-      style={{
-        backgroundImage:
-          product.images.length > 0 ? `url(${product.images[0].src})` : 'none',
-        backgroundColor: product.images.length > 0 ? 'transparent' : '#f0f0f0',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-      aria-label={getAltText(product)}
-    >
-      {product.images.length === 0 && (
+    <div className="relative w-full h-[236px] md:h-[321px] overflow-hidden">
+      {mainImage ? (
+        <img
+          src={mainImage.src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover"
+        />
+      ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
           <span className="text-gray-500">Ingen bild tillgänglig</span>
         </div>
@@ -55,7 +85,7 @@ const MobileProductCard = ({
               <div
                 className="text-sm"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(product.short_description),
+                  __html: sanitizeWP(product.short_description),
                 }}
               />
             </div>
@@ -79,16 +109,14 @@ const DesktopProductCard = ({
   );
 };
 
+// ------------------------------------------------------------
+// Huvudkomponent
+// ------------------------------------------------------------
 const MainPage: React.FC = () => {
   const isAdminMode = useIsAdminMode();
 
-  useEffect(() => {
-    console.log('🛠️ Admin mode (via effect):', isAdminMode);
-  }, [isAdminMode]);
-
-  // State for content
+  // Content-state
   const [homePage, setHomePage] = useState<WPPage | null>(null);
-
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProducts>({
     one: null,
     two: null,
@@ -97,17 +125,20 @@ const MainPage: React.FC = () => {
     five: null,
     six: null,
   });
-
-  // State for info section
   const [infoSection, setInfoSection] = useState<WPPage | null>(null);
 
+  // UI-state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true; // skyddar mot setState efter unmount
+
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         const featuredTags = [
           'featured-one',
@@ -118,20 +149,29 @@ const MainPage: React.FC = () => {
           'featured-six',
         ];
 
-        // Fetch home page for video block
-        const homePageRequest = axios.get(`/api/pages?slug=startsida`);
-
-        // Fetch info page or use home page as fallback
-        const infoPageRequest = axios.get(`/api/pages?slug=info`);
-
-        // Fetch ALL products in a single request
-        const allProductsRequest = axios.get(`/api/products`, {
-          params: {
-            per_page: 100, // Fetch up to 100 products
-          },
+        // Fetch startsida for video block
+        const homePageRequest = axios.get(`/api/pages`, {
+          params: { slug: 'startsida' },
+          signal: controller.signal,
+          timeout: 15000,
         });
 
-        // Wait for all requests in parallel
+        // Fetch infosida
+        const infoPageRequest = axios.get(`/api/pages`, {
+          params: { slug: 'info' },
+          signal: controller.signal,
+          timeout: 15000,
+        });
+
+        // Fetch alla produkter
+        const allProductsRequest = axios.get(`/api/products`, {
+          params: {
+            per_page: 100,
+          },
+          signal: controller.signal,
+          timeout: 20000,
+        });
+
         const [homeResponse, infoPageResponse, allProductsResponse] =
           await Promise.all([
             homePageRequest,
@@ -139,11 +179,45 @@ const MainPage: React.FC = () => {
             allProductsRequest,
           ]);
 
-        // Extract products from response
-        const allProducts = allProductsResponse.data.products || [];
+        console.log(
+          '[fetchData] homeResponse.data length:',
+          homeResponse.data?.length
+        );
+        console.log(
+          '[fetchData] infoPageResponse.data length:',
+          infoPageResponse.data?.length
+        );
 
-        // Create object with featured products based on tags
-        const featuredProductsObj: FeaturedProducts = {
+        const first = homeResponse.data?.[0];
+        console.log(
+          '[fetchData] first page keys:',
+          first ? Object.keys(first) : 'none'
+        );
+        console.log(
+          '[fetchData] first.content?.rendered length:',
+          first?.content?.rendered?.length ?? 0
+        );
+        console.log(
+          '[fetchData] first.content?.rendered start:',
+          first?.content?.rendered?.slice?.(0, 400) ?? ''
+        );
+
+        if (!mounted) return;
+
+        // Produkter
+        const allProducts: Product[] = allProductsResponse.data.products || [];
+
+        // Bygg featured - undvik dubbletter
+        const positions = [
+          'one',
+          'two',
+          'three',
+          'four',
+          'five',
+          'six',
+        ] as const;
+        const used = new Set<number>();
+        const nextFeatured: FeaturedProducts = {
           one: null,
           two: null,
           three: null,
@@ -152,36 +226,20 @@ const MainPage: React.FC = () => {
           six: null,
         };
 
-        type PositionKey = keyof FeaturedProducts;
-
-        // For each tag, find matching product
         featuredTags.forEach((tagSlug, index) => {
-          const positions: PositionKey[] = [
-            'one',
-            'two',
-            'three',
-            'four',
-            'five',
-            'six',
-          ];
-          const position = positions[index];
-
-          // Find first product with this tag
           const product = allProducts.find(
-            (p: Product) => p.tags && p.tags.some((t) => t.slug === tagSlug)
+            (p) => !used.has(p.id) && p.tags?.some((t) => t.slug === tagSlug)
           );
-
-          if (product) {
-            featuredProductsObj[position] = product;
-          }
+          const key = positions[index];
+          nextFeatured[key] = product ?? null;
+          if (product) used.add(product.id);
         });
 
-        // Set states
+        // Sidor
         if (homeResponse.data.length > 0) {
           setHomePage(homeResponse.data[0]);
         }
-
-        setFeaturedProducts(featuredProductsObj);
+        setFeaturedProducts(nextFeatured);
 
         if (infoPageResponse.data.length > 0) {
           setInfoSection(infoPageResponse.data[0]);
@@ -190,42 +248,47 @@ const MainPage: React.FC = () => {
           setInfoSection(homeResponse.data[0]);
         }
       } catch (err) {
+        if (isAbort(err)) return;
         console.error('Error fetching data:', err);
-        setError('Det gick inte att hämta innehållet.');
+        if (mounted) setError('Det gick inte att hämta innehållet.');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, []);
 
-  // Extract video content from the home page
-  const videoContent = homePage?.content?.rendered
-    ? extractVideoBlock(homePage.content.rendered)
-    : null;
+  // Derivera video-delar från startsidans HTML
+  const { src: videoSrc } = useMemo(() => {
+    if (!homePage?.content?.rendered) return { src: '' };
+    return getVideoPartsFromWP(
+      homePage.content.rendered,
+      'https://www.grapeceramics.se'
+    );
+  }, [homePage?.content?.rendered]);
 
-  // Console error if video is missing (for debugging)
-  useEffect(() => {
-    if (!videoContent) {
-      console.error('⚠️ Ingen video tillgänglig på startsidan.');
-    }
-    if (!infoSection) {
-      console.error('⚠️ Info-sektionen saknas.');
-    }
-  }, [videoContent, infoSection]);
-
-  // Convert featured products to array for easier mapping
-  const featuredProductsArray = [
-    featuredProducts.one,
-    featuredProducts.two,
-    featuredProducts.three,
-    featuredProducts.four,
-    featuredProducts.five,
-    featuredProducts.six,
-  ].filter((product) => product !== null);
+  // Konvertera featured till array för rendering
+  const featuredProductsArray = useMemo(
+    () =>
+      [
+        featuredProducts.one,
+        featuredProducts.two,
+        featuredProducts.three,
+        featuredProducts.four,
+        featuredProducts.five,
+        featuredProducts.six,
+      ].filter((p): p is Product => p !== null),
+    [featuredProducts]
+  );
 
   if (isAdminMode && featuredProductsArray.length < 6) {
+    // Hjälpsam logg i admin-läge
     console.warn(
       `⚠️ Endast ${featuredProductsArray.length} av 6 utvalda produkter hittades.`
     );
@@ -241,17 +304,13 @@ const MainPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-full ml-[2px] mr-[2px] overflow-hidden">
-      {/* Mobile/Tablet Layout */}
+      {/* ---- Mobile/Tablet Layout ---- */}
 
       <div className="flex flex-col md:hidden">
         {/* VIDEO */}
         <div className="w-full bg-gray-100 h-full mt-[2px] mb-[2px] z-0">
-          {videoContent ? (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(videoContent.html),
-              }}
-            />
+          {videoSrc ? (
+            <VideoBlock src={videoSrc} />
           ) : isAdminMode ? (
             <div className="bg-white p-4 text-yellow-800 text-center">
               ⚠️ Videoinnehåll saknas. Lägg till ett videoblock på startsidan i
@@ -285,13 +344,13 @@ const MainPage: React.FC = () => {
               <h2
                 className="text-2xl uppercase tracking-custom-wide-2 text-gray-800 mb-6"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(infoSection.title.rendered),
+                  __html: sanitizeWP(infoSection.title.rendered),
                 }}
               />
               <div
                 className="text-gray-700 text-sm tracking-custom-wide-2 leading-relaxed"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(infoSection.content.rendered),
+                  __html: sanitizeWP(infoSection.content.rendered),
                 }}
               />
             </div>
@@ -340,19 +399,15 @@ const MainPage: React.FC = () => {
         )}
       </div>
 
-      {/* Desktop Layout */}
+      {/* ---- Desktop Layout ---- */}
       <div className="hidden md:flex md:flex-col">
         {/* Video Section */}
         <div className="w-full pt-[2px] pl-[2px] pr-[2px] z-0">
-          {videoContent && (
-            <div className="w-full pt-[2px] pl-[2px] pr-[2px] z-0">
-              <div
-                className="w-full max-h-[400px] overflow-hidden"
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(videoContent.html),
-                }}
-              ></div>
-            </div>
+          {videoSrc && (
+            <VideoBlock
+              src={videoSrc}
+              className="w-full max-h-[400px] overflow-hidden"
+            />
           )}
         </div>
 
@@ -390,13 +445,13 @@ const MainPage: React.FC = () => {
               <h2
                 className="text-[18px] uppercase tracking-custom-wider-2 text-gray-800 mb-6"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(infoSection.title.rendered),
+                  __html: sanitizeWP(infoSection.title.rendered),
                 }}
               />
               <div
                 className="text-gray-800 text-[16px] tracking-custom-wide-2 md:text-base leading-relaxed"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(infoSection.content.rendered),
+                  __html: sanitizeWP(infoSection.content.rendered),
                 }}
               />
             </div>

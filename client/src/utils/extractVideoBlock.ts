@@ -1,28 +1,27 @@
-/**
- * Extraherar videoblock från WordPress-innehåll
- * @param content - HTML-innehåll som kan innehålla videoblock
- * @returns HTML-sträng med video-taggen eller null om ingen video hittades
- */
-export const extractVideoBlock = (content: string): string | null => {
-  // Hitta videoblocket i innehållet
-  const videoRegex = /<figure class="wp-block-video.*?>([\s\S]*?)<\/figure>/i;
-  const match = content.match(videoRegex);
+export const extractVideoBlock = (
+  content: string
+): { html: string; src: string | null } | null => {
+  if (!content) return null;
 
-  if (match && match[1]) {
-    // Extrahera video-taggen
-    const videoTag = match[1].match(/<video.*?>[\s\S]*?<\/video>/i);
-    if (videoTag) {
-      return videoTag[0];
-    }
-  }
+  // 1) Försök fånga hela Gutenberg-figuren
+  const figureMatch = content.match(
+    /<figure[^>]*class="[^"]*\bwp-block-video\b[^"]*"[^>]*>[\s\S]*?<\/figure>/i
+  );
 
-  // Försök med alternativ struktur (ibland saknas figure-wrapper)
-  const directVideoRegex = /<video.*?>[\s\S]*?<\/video>/i;
-  const directMatch = content.match(directVideoRegex);
+  // 2) Fallback: fristående <video>…</video>
+  const videoMatch = figureMatch
+    ? null
+    : content.match(/<video\b[\s\S]*?<\/video>/i);
 
-  if (directMatch) {
-    return directMatch[0];
-  }
+  const blockHtml = figureMatch?.[0] ?? videoMatch?.[0] ?? null;
+  if (!blockHtml) return null;
 
-  return null;
+  // Hämta src från <video src="…"> i första hand
+  const videoSrcMatch =
+    blockHtml.match(/<video[^>]*\bsrc="([^"]+)"/i) ||
+    blockHtml.match(/<source[^>]*\bsrc="([^"]+)"/i);
+
+  const src = videoSrcMatch ? videoSrcMatch[1] : null;
+
+  return { html: blockHtml, src };
 };
