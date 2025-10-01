@@ -153,12 +153,10 @@ const ShopGrid1: React.FC = () => {
       {/* Mobil & tablet layout */}
       <div className="grid grid-cols-2 md:grid-cols-2 auto-rows-auto gap-[1px] lg:hidden">
         {loading
-          ? // Visa skeleton loaders
-            mobileSkeletonIndices.map((index) => (
+          ? mobileSkeletonIndices.map((index) => (
               <SkeletonProductCard key={index} index={index} />
             ))
-          : // Visa produkter
-            filteredProducts.map((product, index) => (
+          : filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -171,12 +169,10 @@ const ShopGrid1: React.FC = () => {
       {/* Desktop layout */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-[1px]">
         {loading
-          ? // Visa desktop skeleton loaders
-            desktopSkeletonIndices.map((index) => (
+          ? desktopSkeletonIndices.map((index) => (
               <SkeletonDesktopProductCard key={index} />
             ))
-          : // Visa desktop produkter
-            filteredProducts.map((product) => (
+          : filteredProducts.map((product) => (
               <DesktopProductCard
                 key={product.id}
                 product={product}
@@ -184,10 +180,12 @@ const ShopGrid1: React.FC = () => {
               />
             ))}
       </div>
+
       {/* Paginering */}
       {!loading && renderPagination()}
     </div>
-  );
+);
+
 };
 
 export default ShopGrid1;

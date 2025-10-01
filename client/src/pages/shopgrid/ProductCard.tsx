@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   getProductLayoutClasses,
   getImageHeightClasses,
@@ -11,21 +11,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
   index,
   onClick,
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const mainImage = product.images[0]?.src;
+  const hoverImage = product.images[1]?.src;
+
   return (
     <div
       className={getProductLayoutClasses(index)}
       onClick={() => onClick(product.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Produktbild */}
       <div
-        className={`w-full ${getImageHeightClasses(index)} bg-gray-100 overflow-hidden`}
+        className={`w-full ${getImageHeightClasses(
+          index
+        )} bg-gray-100 overflow-hidden relative`}
       >
         <img
-          src={product.images[0].src}
-          alt={product.images[0].alt}
+          src={isHovered && hoverImage ? hoverImage : mainImage}
+          alt={product.images[0]?.alt || product.name}
           loading="lazy"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition duration-300"
         />
+
+        {/* Pil-overlay – visas bara vid hover om det finns fler bilder */}
+        {isHovered && hoverImage && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+            <span className="text-white text-3xl">➜</span>
+          </div>
+        )}
       </div>
 
       {/* Produktnamn och pris */}

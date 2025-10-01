@@ -10,7 +10,9 @@
     "build:all": "npm run build",
     "deploy": "npm run build:all && netlify deploy --prod",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "build:client:watch": "cd client && npm run build -- --watch",
+    "dev:auto": "concurrently \"npm run build:client:watch\" \"netlify dev\""
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.19",
     "@types/node-cache": "^4.1.3",
+    "concurrently": "^9.2.1",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
