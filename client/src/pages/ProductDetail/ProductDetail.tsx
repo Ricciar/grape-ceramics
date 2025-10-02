@@ -1,37 +1,44 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import ProductSkeleton from './ProductSkeleton';
-import ImageGallery from './ImageGallery';
-import Button from '../../components/Button';
-import useCart from '../../components/Cart/UseCart';
-import { Product, ProductDetailProps } from '../shopgrid/types';
-import OrderRequestModal from './OrderRequestModal';
+import React, { useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import ProductSkeleton from "./ProductSkeleton";
+import Button from "../../components/Button";
+import useCart from "../../components/Cart/UseCart";
+import { Product, ProductDetailProps } from "../shopgrid/types";
+import OrderRequestModal from "./OrderRequestModal";
 
 interface ExtendedProductDetailProps extends ProductDetailProps {
   isCourse?: boolean;
 }
 
-const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange, isCourse = false }) => {
+const SWIPE_THRESHOLD = 50; // px
+
+const ProductDetail: React.FC<ExtendedProductDetailProps> = ({
+  onLoadingChange,
+  isCourse = false,
+}) => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isOrderRequestModalOpen, setIsOrderRequestModalOpen] =
+    useState(false);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isOrderRequestModalOpen, setIsOrderRequestModalOpen] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   const isMounted = useRef(true);
-
   const { addToCart } = useCart();
 
+  // Hämta produkt/kurs
   useEffect(() => {
     const abortController = new AbortController();
 
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        if (onLoadingChange) onLoadingChange(true);
+        onLoadingChange?.(true);
 
         const response = await axios.get(`/api/products/${id}`, {
           signal: abortController.signal,
@@ -39,38 +46,37 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange, 
 
         if (isMounted.current) {
           setProduct(response.data);
+          setCurrentImageIndex(0);
         }
-      } catch (error) {
-        if (!axios.isCancel(error) && isMounted.current) {
+      } catch (err) {
+        if (!axios.isCancel(err) && isMounted.current) {
           setError(true);
         }
       } finally {
         if (isMounted.current) {
           setLoading(false);
-          if (onLoadingChange) onLoadingChange(false);
+          onLoadingChange?.(false);
         }
       }
     };
 
-    if (id) {
-      fetchProduct();
-    }
+    if (id) fetchProduct();
 
     return () => {
       isMounted.current = false;
-      abortController.abort('Component unmounted');
+      abortController.abort("Component unmounted");
     };
   }, [id, onLoadingChange]);
 
+  // Sätt sidtitel
   useEffect(() => {
-    if (product && product.name) {
+    if (product?.name) {
       document.title = `${product.name} | Grape Ceramics`;
     } else if (isCourse) {
       document.title = `Kurs | Grape Ceramics`;
     }
-
     return () => {
-      document.title = 'Grape Ceramics';
+      document.title = "Grape Ceramics";
     };
   }, [product, isCourse]);
 
@@ -78,49 +84,100 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange, 
   if (error) return <p>Error fetching product</p>;
 
   const hasImages = product.images && product.images.length > 0;
-  const currentImage = hasImages ? product.images[currentImageIndex] : null;
+  const multipleImages = hasImages && product.images.length > 1;
+
+  const nextImage = () => {
+    if (!multipleImages) return;
+    setCurrentImageIndex((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    if (!multipleImages) return;
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
+  };
+
+  // Mobil-swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!multipleImages || touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (deltaX > SWIPE_THRESHOLD) prevImage();
+    else if (deltaX < -SWIPE_THRESHOLD) nextImage();
+    touchStartX.current = null;
+  };
 
   return (
     <>
       <div className="flex flex-col items-center lg:flex-row lg:justify-around lg:gap-[11rem] mb-[1px]">
+        {/* ---------- BILDER ---------- */}
         <div className="w-full lg:w-1/2 flex flex-col">
-          <div className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden">
-            {currentImage ? (
+          {hasImages ? (
+            <div
+              className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <img
-                src={currentImage.src}
-                alt={currentImage.alt || product.name}
+                src={product.images[currentImageIndex].src}
+                alt={
+                  product.images[currentImageIndex].alt || product.name
+                }
                 className="w-full h-full object-cover"
               />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <span>No image available</span>
-              </div>
-            )}
-          </div>
 
-          {hasImages && (
-            <ImageGallery
-              images={product.images.map((img) => img.src)}
-              currentIndex={currentImageIndex}
-              onImageClick={setCurrentImageIndex}
-            />
+              {/* Pilar (desktop) – bara om fler än 1 bild */}
+              {multipleImages && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="hidden lg:flex absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white px-3 py-2"
+                    aria-label="Föregående bild"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white px-3 py-2"
+                    aria-label="Nästa bild"
+                  >
+                    →
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-[450px] lg:h-[645px] bg-gray-200 flex items-center justify-center">
+              <span>No image available</span>
+            </div>
           )}
         </div>
 
+        {/* ---------- INFO ---------- */}
         <div className="flex flex-col items-center w-full lg:w-1/2 lg:items-start max-w-[290px] lg:max-w-none font-light tracking-[2.85px]">
           <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
             {product.name}
           </h1>
 
           <p className="text-[16px] mt-[5px] whitespace-pre-line">
-            {product.description || 'Ingen beskrivning tillgänglig.'}
+            {product.description || "Ingen beskrivning tillgänglig."}
           </p>
 
           <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
             <div className="flex items-center">
-              {product.stock_status === 'instock' ? (
+              {product.stock_status === "instock" ? (
                 <span>
-                  I lager {product.stock_quantity !== null ? `${product.stock_quantity}` : ''} st
+                  I lager{" "}
+                  {product.stock_quantity !== null
+                    ? `${product.stock_quantity}`
+                    : ""}{" "}
+                  st
                 </span>
               ) : (
                 <div className="flex self-end items-center justify-center">
@@ -147,16 +204,17 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange, 
 
           <Button
             text={
-              product.stock_status === 'instock'
+              product.stock_status === "instock"
                 ? addedToCart
-                  ? 'TILLAGD I VARUKORG'
-                  : 'LÄGG I VARUKORG'
-                : 'ORDERFÖRFRÅGAN'
+                  ? "TILLAGD I VARUKORG"
+                  : "LÄGG I VARUKORG"
+                : "ORDERFÖRFRÅGAN"
             }
             className="w-[292px] h-[55px] mb-5"
             onClick={() => {
-              if (product.stock_status === 'instock') {
-                const primaryImage = product.images.length > 0 ? product.images[0].src : '';
+              if (product.stock_status === "instock") {
+                const primaryImage =
+                  product.images.length > 0 ? product.images[0].src : "";
                 addToCart(
                   {
                     id: product.id,

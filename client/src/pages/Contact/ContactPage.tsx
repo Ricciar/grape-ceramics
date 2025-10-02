@@ -47,9 +47,11 @@ const ContactPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,7 +65,7 @@ const ContactPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="error-container">
+      <div className="error-container font-sans font-light">
         <p className="error-message">{error}</p>
       </div>
     );
@@ -71,30 +73,34 @@ const ContactPage: React.FC = () => {
 
   if (!pageData) {
     return (
-      <div className="no-data-container">
+      <div className="no-data-container font-sans font-light">
         <p>Ingen kontaktinformation tillgänglig just nu.</p>
       </div>
     );
   }
 
-    return (
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-3xl px-6 py-12 font-sans">
-        <h1 className="text-3xl font-normal text-center mb-8">
+  return (
+    <div className="w-full flex justify-center font-sans font-light">
+      <div className="w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
+        {/* Rubrik */}
+        <h1 className="text-2xl sm:text-3xl font-light text-center mb-6 sm:mb-8">
           {pageData.title?.rendered || 'Kontakt'}
         </h1>
 
+        {/* Om-mig text */}
         {pageData.content?.rendered && (
           <div
-            className="prose max-w-none mb-12 text-base leading-relaxed"
+            className="prose prose-sm sm:prose-base max-w-none mb-8 sm:mb-12 text-center sm:text-left"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(pageData.content.rendered),
             }}
           />
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Formulär */}
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          {/* Namn & E-post */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="name">
                 Namn
@@ -106,7 +112,7 @@ const ContactPage: React.FC = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-2"
+                className="w-full border border-gray-300 rounded-md p-2 font-sans font-light"
               />
             </div>
 
@@ -121,11 +127,12 @@ const ContactPage: React.FC = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-2"
+                className="w-full border border-gray-300 rounded-md p-2 font-sans font-light"
               />
             </div>
           </div>
 
+          {/* Telefon */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="phone">
               Telefonnummer
@@ -136,10 +143,11 @@ const ContactPage: React.FC = () => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-2"
+              className="w-full border border-gray-300 rounded-md p-2 font-sans font-light"
             />
           </div>
 
+          {/* Meddelande */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="message">
               Meddelande
@@ -148,19 +156,22 @@ const ContactPage: React.FC = () => {
               id="message"
               name="message"
               required
-              rows={6}
+              rows={5}
               value={formData.message}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-2"
+              className="w-full border border-gray-300 rounded-md p-2 font-sans font-light"
             />
           </div>
 
-          <button
-            type="submit"
-            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800"
-          >
-            Skicka
-          </button>
+          {/* Knapp */}
+          <div className="flex justify-center sm:justify-start">
+            <button
+              type="submit"
+              className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 font-sans font-light"
+            >
+              Skicka
+            </button>
+          </div>
 
           {submitted && (
             <p className="text-green-600 mt-2">
@@ -171,7 +182,6 @@ const ContactPage: React.FC = () => {
       </div>
     </div>
   );
-
 };
 
 export default ContactPage;

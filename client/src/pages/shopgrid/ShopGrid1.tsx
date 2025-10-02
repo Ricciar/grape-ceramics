@@ -27,7 +27,6 @@ const ShopGrid1: React.FC = () => {
         let totalPagesFetched = 1;
 
         do {
-          // 👉 Hämtar redan normaliserade produkter (kurser exkluderade)
           const response = await axios.get(
             `/api/products?page=${currentPage}&per_page=${perPage}`
           );
@@ -89,21 +88,24 @@ const ShopGrid1: React.FC = () => {
         onFilterProducts={handleFilterProducts}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-2 auto-rows-auto gap-[1px] lg:hidden">
-        {loading
-          ? mobileSkeletonIndices.map((index) => (
-              <SkeletonProductCard key={index} index={index} />
-            ))
-          : filteredProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                index={index}
-                onClick={navigateToProduct}
-              />
-            ))}
-      </div>
+        {/* Mobil layout */}
+        <div className="grid grid-cols-2 auto-rows-auto gap-[2px] px-[2px] lg:hidden">
+          {loading
+            ? mobileSkeletonIndices.map((index) => (
+                <SkeletonProductCard key={index} index={index} />
+              ))
+            : filteredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={index}
+                  onClick={navigateToProduct}
+                />
+              ))}
+        </div>
 
+
+      {/* Desktop – grid */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-[1px]">
         {loading
           ? desktopSkeletonIndices.map((index) => (

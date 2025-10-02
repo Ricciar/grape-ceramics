@@ -26,7 +26,6 @@ function VideoBlock({
       <video
         key={src}
         src={src}
-        controls
         autoPlay
         muted
         loop

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Om du använder React Router
+import { Link } from 'react-router-dom';
 
 const NavMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +37,7 @@ const NavMenu: React.FC = () => {
 
   return (
     <div className="relative">
+      {/* Hamburgerknappen */}
       <button
         onClick={toggleMenu}
         className="relative w-10 h-10 focus:outline-none"
@@ -59,7 +60,7 @@ const NavMenu: React.FC = () => {
         </div>
       </button>
 
-      {/* Navigationslänkar som visas när menyn är öppen */}
+      {/* Mobilmenyn */}
       {isAnimating && (
         <div
           className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-10 z-50 transition-all duration-300 ease-in-out"
@@ -69,18 +70,18 @@ const NavMenu: React.FC = () => {
           }}
         >
           <Link
-            to="/kurser"
-            className="py-4 text-stone-800 hover:text-stone-600"
-            onClick={closeMenu}
-          >
-            KURSER
-          </Link>
-          <Link
             to="/butik"
             className="py-4 text-stone-800 hover:text-stone-600"
             onClick={closeMenu}
           >
             BUTIK
+          </Link>
+          <Link
+            to="/kurser"
+            className="py-4 text-stone-800 hover:text-stone-600"
+            onClick={closeMenu}
+          >
+            KURSER
           </Link>
           <Link
             to="/kontakt"
