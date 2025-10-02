@@ -8,7 +8,11 @@ import useCart from '../../components/Cart/UseCart';
 import { Product, ProductDetailProps } from '../shopgrid/types';
 import OrderRequestModal from './OrderRequestModal';
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
+interface ExtendedProductDetailProps extends ProductDetailProps {
+  isCourse?: boolean;
+}
+
+const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange, isCourse = false }) => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,14 +38,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
         });
 
         if (isMounted.current) {
-          console.log('Product fetched:', response.data);
           setProduct(response.data);
         }
       } catch (error) {
-        if (axios.isCancel(error)) {
-          console.log('Request canceled:', error.message);
-        } else if (isMounted.current) {
-          console.error('Error fetching product:', error);
+        if (!axios.isCancel(error) && isMounted.current) {
           setError(true);
         }
       } finally {
@@ -58,7 +58,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
 
     return () => {
       isMounted.current = false;
-
       abortController.abort('Component unmounted');
     };
   }, [id, onLoadingChange]);
@@ -66,48 +65,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
   useEffect(() => {
     if (product && product.name) {
       document.title = `${product.name} | Grape Ceramics`;
+    } else if (isCourse) {
+      document.title = `Kurs | Grape Ceramics`;
     }
 
     return () => {
-      setAddedToCart(false);
       document.title = 'Grape Ceramics';
     };
-  }, [product]);
-
-  const handleOrderRequest = () => {
-    setIsOrderRequestModalOpen(true);
-  };
-
-  const closeOrderRequestModal = () => {
-    setIsOrderRequestModalOpen(false);
-  };
-
-  // Hantera tillägg i varukorgen
-  const handleAddToCart = () => {
-    if (product) {
-      const primaryImage =
-        product.images.length > 0 ? product.images[0].src : '';
-
-      addToCart(
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          imageUrl: primaryImage,
-          quantity: 1,
-          description: product.description,
-        },
-        1
-      );
-      setAddedToCart(true);
-
-      setTimeout(() => {
-        if (isMounted.current) {
-          setAddedToCart(false);
-        }
-      }, 2000);
-    }
-  };
+  }, [product, isCourse]);
 
   if (loading || !product) return <ProductSkeleton />;
   if (error) return <p>Error fetching product</p>;
@@ -119,14 +84,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
     <>
       <div className="flex flex-col items-center lg:flex-row lg:justify-around lg:gap-[11rem] mb-[1px]">
         <div className="w-full lg:w-1/2 flex flex-col">
-          {/* Huvudbild */}
           <div className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden">
             {currentImage ? (
               <img
                 src={currentImage.src}
                 alt={currentImage.alt || product.name}
                 className="w-full h-full object-cover"
-                aria-labelledby={`product-title-${product.id}`}
               />
             ) : (
               <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -135,7 +98,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
             )}
           </div>
 
-          {/* Bildgalleri */}
           {hasImages && (
             <ImageGallery
               images={product.images.map((img) => img.src)}
@@ -144,12 +106,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
             />
           )}
         </div>
-        {/* Produktinformation */}
+
         <div className="flex flex-col items-center w-full lg:w-1/2 lg:items-start max-w-[290px] lg:max-w-none font-light tracking-[2.85px]">
-          <h1
-            id={`product-title-${product.id}`}
-            className="font-sans text-[24px] font-light tracking-[4.56px] mt-5"
-          >
+          <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
             {product.name}
           </h1>
 
@@ -157,16 +116,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
             {product.description || 'Ingen beskrivning tillgänglig.'}
           </p>
 
-          {/* Lagerstatus och pris */}
           <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
             <div className="flex items-center">
               {product.stock_status === 'instock' ? (
                 <span>
-                  I lager{' '}
-                  {product.stock_quantity !== null
-                    ? `${product.stock_quantity}`
-                    : ''}
-                  st
+                  I lager {product.stock_quantity !== null ? `${product.stock_quantity}` : ''} st
                 </span>
               ) : (
                 <div className="flex self-end items-center justify-center">
@@ -191,7 +145,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
             </div>
           </div>
 
-          {/* Handlingsknapp */}
           <Button
             text={
               product.stock_status === 'instock'
@@ -201,19 +154,35 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ onLoadingChange }) => {
                 : 'ORDERFÖRFRÅGAN'
             }
             className="w-[292px] h-[55px] mb-5"
-            onClick={
-              product.stock_status === 'instock'
-                ? handleAddToCart
-                : handleOrderRequest
-            }
+            onClick={() => {
+              if (product.stock_status === 'instock') {
+                const primaryImage = product.images.length > 0 ? product.images[0].src : '';
+                addToCart(
+                  {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    imageUrl: primaryImage,
+                    quantity: 1,
+                    description: product.description,
+                  },
+                  1
+                );
+                setAddedToCart(true);
+                setTimeout(() => {
+                  if (isMounted.current) setAddedToCart(false);
+                }, 2000);
+              } else {
+                setIsOrderRequestModalOpen(true);
+              }
+            }}
           />
         </div>
       </div>
 
-      {/* Orderförfrågan modal */}
       <OrderRequestModal
         isOpen={isOrderRequestModalOpen}
-        onClose={closeOrderRequestModal}
+        onClose={() => setIsOrderRequestModalOpen(false)}
       />
     </>
   );

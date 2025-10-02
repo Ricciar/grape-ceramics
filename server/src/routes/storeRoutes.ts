@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { StoreController } from '../controllers/storeController.js';
 import { ApiClient } from '../services/apiClient.js';
 import { ProductMapper } from '../services/productMapper.js';
@@ -8,8 +8,8 @@ import { config } from '../config/environment.js';
 import { Config } from '../config/types/config.js';
 
 const router = Router();
+console.log('✅ storeRoutes.ts laddas in');
 
-// Mappa environment config till Config interface
 const serviceConfig: Config = {
   apiUrl: config.woocommerceApiUrl,
   woocommerceConsumerKey: config.woocommerceConsumerKey,
@@ -21,7 +21,6 @@ const productMapper = new ProductMapper();
 const categoryMapper = new CategoryMapper();
 const orderService = new OrderService(serviceConfig);
 
-// En instans av StoreController skapas med hjälp av de instanser som skapats ovan
 const storeController = new StoreController(
   apiClient,
   productMapper,
@@ -29,16 +28,35 @@ const storeController = new StoreController(
   orderService
 );
 
-// Här definieras de olika endpoints som StoreController ska hantera
+// alla metoder returnerar Promise<void> nu
 router.get(
   '/products/:id',
-  storeController.getProductById.bind(storeController)
+  (req: Request, res: Response, next: NextFunction) =>
+    void storeController.getProductById(req, res, next)
 );
-router.get('/products', storeController.getAllProducts.bind(storeController));
+
+router.get(
+  '/products',
+  (req: Request, res: Response, next: NextFunction) =>
+    void storeController.getAllProducts(req, res, next)
+);
+
+router.get(
+  '/courses',
+  (req: Request, res: Response, next: NextFunction) =>
+    void storeController.getAllCourses(req, res, next)
+);
+
 router.get(
   '/category',
-  storeController.getProductCategory.bind(storeController)
+  (req: Request, res: Response, next: NextFunction) =>
+    void storeController.getProductCategory(req, res, next)
 );
-router.post('/order', storeController.createOrder.bind(storeController));
+
+router.post(
+  '/order',
+  (req: Request, res: Response, next: NextFunction) =>
+    void storeController.createOrder(req, res, next)
+);
 
 export default router;

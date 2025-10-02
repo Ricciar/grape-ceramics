@@ -4,13 +4,19 @@ import DOMPurify from 'dompurify';
 import { WPPage } from '../MainPage/types';
 import { SkeletonContactPage } from './SkeletonContactPage';
 
-/**
- * ContactPage component fetches and displays contact information from WordPress
- */
 const ContactPage: React.FC = () => {
   const [pageData, setPageData] = useState<WPPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,8 +24,6 @@ const ContactPage: React.FC = () => {
         setLoading(true);
 
         const response = await axios.get(`/api/pages?slug=kontakt`);
-
-        console.log('API Response:', response.data);
 
         if (
           response.data &&
@@ -36,16 +40,26 @@ const ContactPage: React.FC = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to fetch data. Please try again later.');
+        setError('Kunde inte hämta kontaktinformationen. Försök igen senare.');
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  if (loading) {
-    return <SkeletonContactPage />;
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Formulär skickat:', formData);
+    setSubmitted(true);
+    // TODO: koppla till backend/mailservice
+  };
+
+  if (loading) return <SkeletonContactPage />;
 
   if (error) {
     return (
@@ -58,30 +72,106 @@ const ContactPage: React.FC = () => {
   if (!pageData) {
     return (
       <div className="no-data-container">
-        <p>No contact information available at the moment.</p>
+        <p>Ingen kontaktinformation tillgänglig just nu.</p>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col items-center">
-      <div className="contact-page-container max-w-[700px] font-sans tracking-custom-wide-2 mt-[20px] mb-[20px] pl-[49px] pr-[49px]">
-        <h1 className="text-[24px] mb-[20px]">
-          {pageData.title?.rendered || 'Contact'}
+    return (
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-3xl px-6 py-12 font-sans">
+        <h1 className="text-3xl font-normal text-center mb-8">
+          {pageData.title?.rendered || 'Kontakt'}
         </h1>
 
-        {/* Safely render HTML content from WordPress */}
         {pageData.content?.rendered && (
           <div
-            className="content text-[16px]"
+            className="prose max-w-none mb-12 text-base leading-relaxed"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(pageData.content.rendered),
             }}
           />
         )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="name">
+                Namn
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="email">
+                E-post *
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="phone">
+              Telefonnummer
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="message">
+              Meddelande
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              required
+              rows={6}
+              value={formData.message}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md p-2"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800"
+          >
+            Skicka
+          </button>
+
+          {submitted && (
+            <p className="text-green-600 mt-2">
+              Tack för ditt meddelande! Vi återkommer så snart vi kan.
+            </p>
+          )}
+        </form>
       </div>
     </div>
   );
+
 };
 
 export default ContactPage;

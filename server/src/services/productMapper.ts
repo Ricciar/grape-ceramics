@@ -2,7 +2,6 @@ import {
   Product,
   ProductResponse,
   FeaturedProduct,
-  ProductImages,
 } from '../controllers/types/product.types.js';
 import { stripHtml } from '../utils/productUtils.js';
 
@@ -15,16 +14,16 @@ export class ProductMapper {
       images: product.images,
       description: stripHtml(product.description),
       short_description: stripHtml(product.short_description),
-      regular_price: product.regular_price,
-      sale_price: product.sale_price,
-      price: product.price,
+      regular_price: product.regular_price || '',
+      sale_price: product.sale_price || '',
+      price: product.price || '',
       stock_status: product.stock_status,
       stock_quantity: product.stock_quantity,
       categories: product.categories.map((category) => ({
         id: category.id,
         name: category.name,
       })),
-      tags: product.tags || [],
+      tags: product.tags || ([] as FeaturedProduct[]),
     };
   }
 }

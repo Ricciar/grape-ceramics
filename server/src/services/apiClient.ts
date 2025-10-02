@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, Axios } from 'axios';
+import axios from 'axios';
 import { config } from '../config/environment.js';
 import { Config } from '../config/types/config.js';
 import { ProductResponse } from '../controllers/types/product.types.js';
@@ -9,28 +9,13 @@ import {
 } from '../controllers/types/order.types.js';
 import NodeCache from 'node-cache';
 
-/**
- * ApiClient
- * ---------
- * En klass som hanterar anrop (requests) till WooCommerce-API:t.
- * Den använder Axios för HTTP-förfrågningar och erbjuder metoder för att hämta produkter och kategorier.
- */
+const COURSE_TAG_SLUGS = ['courses-one', 'courses-two', 'courses-three', 'courses-four'];
+const COURSE_CATEGORY_SLUGS = ['kurser', 'kurs', 'course', 'courses'];
+
 export class ApiClient {
-  /**
-   * Förvarar konfigurationsobjektet (Config) som innehåller
-   * nödvändig information för att anropa WooCommerce, såsom:
-   * - apiUrl (grund-URL till WooCommerce-API)
-   * - consumerKey
-   * - consumerSecret
-   */
   private readonly config: Config;
   public cache: NodeCache = new NodeCache({ stdTTL: 300 });
 
-  /**
-   * Konstruktorn tar emot ett Config-objekt, vilket sedan lagras
-   * som en privat egenskap. Används för att generera autentiserings-
-   * uppgifter samt bas-URL till API-anropen.
-   */
   constructor(customConfig?: Config) {
     this.config = customConfig || {
       apiUrl: config.woocommerceApiUrl,
@@ -39,21 +24,9 @@ export class ApiClient {
     };
   }
 
-  public setCache(key: string, value: any) {
-    this.cache.set(key, value);
-  }
-
-  /**
-   * getAuthConfig
-   * -------------
-   * Privat metod som returnerar ett auth-objekt för Basic Authentication.
-   * Axios använder detta för att skicka med användarnamn (consumerKey)
-   * och lösenord (consumerSecret) för WooCommerce-API.
-   */
   private getAuthConfig() {
     return {
       auth: {
-        // Använder credentials från config för Basic Auth
         username: this.config.woocommerceConsumerKey,
         password: this.config.woocommerceConsumerSecret,
       },
@@ -62,55 +35,146 @@ export class ApiClient {
   }
 
   /**
-   * getProducts
-   * -----------
-   * Hämtar alla produkter från WooCommerce.
-   * Returnerar ett AxiosResponse-liknande objekt innehållande:
-   * { data: ProductResponse[] }
-   * @throws {Error} vid nätverks- eller API-fel
+   * Normaliserar ett WooCommerce-pris.
+   * Returnerar tom sträng om inget pris finns.
    */
+  private normalizePrice(value: any): string {
+    if (value === undefined || value === null || value === '') return '';
+
+    const num = Number(value);
+    if (isNaN(num) || num === 0) return '';
+
+    // Woo kan skicka pris i ören (t.ex. 399000 i stället för 3990.00)
+    if (num > 10000) {
+      return (num / 100).toFixed(2).replace(/\.00$/, '');
+    }
+
+    return String(num);
+  }
+
+  private pickNumericPrice(product: any): string {
+    // Store API form (korrekt i kronor)
+    const storeApiSale = product?.prices?.sale_price;
+    const storeApiPrice = product?.prices?.price;
+
+    if (storeApiSale) return this.normalizePrice(storeApiSale);
+    if (storeApiPrice) return this.normalizePrice(storeApiPrice);
+
+    // Fallback: REST v3
+    const restSale = product?.sale_price;
+    const restPrice = product?.price;
+    const restRegular = product?.regular_price;
+
+    if (restSale) return this.normalizePrice(restSale);
+    if (restPrice) return this.normalizePrice(restPrice);
+    if (restRegular) return this.normalizePrice(restRegular);
+
+    return '';
+  }
+
+  private normalizeProduct<T extends Record<string, any>>(product: T): T {
+    return {
+      ...product,
+      // alltid rätt baspris
+      price: this.pickNumericPrice(product),
+      // bara inkludera om de finns
+      regular_price: product?.regular_price ? this.normalizePrice(product.regular_price) : null,
+      sale_price: product?.sale_price ? this.normalizePrice(product.sale_price) : null,
+    };
+  }
+
+  private hasCourseTag(product: any): boolean {
+    const tags = Array.isArray(product?.tags) ? product.tags : [];
+    return tags.some(
+      (t: any) =>
+        typeof t?.slug === 'string' && COURSE_TAG_SLUGS.includes(t.slug.toLowerCase().trim())
+    );
+  }
+
+  private hasCourseCategory(product: any): boolean {
+    const cats = Array.isArray(product?.categories) ? product.categories : [];
+    return cats.some((c: any) => {
+      const bySlug =
+        typeof c?.slug === 'string' &&
+        COURSE_CATEGORY_SLUGS.includes(c.slug.toLowerCase().trim());
+      const byName =
+        typeof c?.name === 'string' &&
+        COURSE_CATEGORY_SLUGS.includes(c.name.toLowerCase().trim());
+      return bySlug || byName;
+    });
+  }
+
+  private isCourseProduct(product: any): boolean {
+    return this.hasCourseTag(product) || this.hasCourseCategory(product);
+  }
+
   async getProducts(
     page: number = 1,
     perPage: number = 12
   ): Promise<{ data: ProductResponse[]; headers: any }> {
     const start = Date.now();
 
-    const response = axios.get(`${this.config.apiUrl}products`, {
+    const response = await axios.get(`${this.config.apiUrl}products`, {
       ...this.getAuthConfig(),
       params: {
         page,
         per_page: perPage,
         _fields:
-          'id,name,price,description,short_description,images,categories,variations,attributes, tags',
+          'id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices',
       },
     });
 
     const duration = Date.now() - start;
-    console.log(`WooCommerce API call (page ${page}) took ${duration}ms`);
+    console.log(`WooCommerce API (products page ${page}) ${duration}ms`);
 
-    return response;
+    const normalized = (response.data as any[]).map((p) => this.normalizeProduct(p));
+    const filtered = normalized.filter((p) => !this.isCourseProduct(p));
+
+    console.log(
+      `[SHOP] fetched=${normalized.length} filteredOutCourses=${normalized.length - filtered.length}`
+    );
+
+    return {
+      data: filtered as unknown as ProductResponse[],
+      headers: response.headers,
+    };
   }
 
-  /**
-   * getProductById
-   * --------------
-   * Hämtar en specifik produkt baserat på dess unika ID (sträng).
-   * Returnerar { data: ProductResponse }, där data motsvarar
-   * en rå produktdata från WooCommerce-API:t.
-   */
+  async getCourses(
+    page: number = 1,
+    perPage: number = 12
+  ): Promise<{ data: ProductResponse[]; headers: any }> {
+    const response = await axios.get(`${this.config.apiUrl}products`, {
+      ...this.getAuthConfig(),
+      params: {
+        page,
+        per_page: perPage,
+        _fields:
+          'id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices',
+      },
+    });
+
+    const normalized = (response.data as any[]).map((p) => this.normalizeProduct(p));
+    const onlyCourses = normalized.filter((p) => this.isCourseProduct(p));
+
+    console.log(`[COURSES] fetched=${normalized.length} keptCourses=${onlyCourses.length}`);
+
+    return {
+      data: onlyCourses as unknown as ProductResponse[],
+      headers: response.headers,
+    };
+  }
+
   async getProductById(id: number): Promise<{ data: ProductResponse }> {
-    return axios.get(
+    const response = await axios.get(
       `${this.config.apiUrl}products/${id}`,
       this.getAuthConfig()
     );
+    return {
+      data: this.normalizeProduct(response.data) as ProductResponse,
+    };
   }
 
-  /**
-   * getProductCategories
-   * --------------------
-   * Hämtar en lista av produktkategorier från WooCommerce.
-   * Returnerar { data: CategoryResponse[] }.
-   */
   async getProductCategories(): Promise<{ data: CategoryResponse[] }> {
     return axios.get(
       `${this.config.apiUrl}products/categories`,
@@ -118,12 +182,6 @@ export class ApiClient {
     );
   }
 
-  /**
-   * createOrder
-   * --------------------
-   * Tar emot en 'OrderRequest från frontend och skickar den till WooCommerce.
-   * Returnerar WooCommerce's 'OrderRespons', som innehåller order-ID och checkout-URL.
-   */
   async createOrder(
     orderData: WooCommerceOrderRequest
   ): Promise<{ data: WooCommerceOrderResponse }> {

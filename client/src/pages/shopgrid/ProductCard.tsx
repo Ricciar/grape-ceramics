@@ -16,6 +16,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const mainImage = product.images[0]?.src;
   const hoverImage = product.images[1]?.src;
 
+  // Säkerställ att priser alltid visas korrekt
+  const formatPrice = (price: string | null): string => {
+    if (!price) return "0";
+    const num = Number(price);
+    if (isNaN(num)) return price; // om det redan är text
+    return num.toFixed(2); // visa med 2 decimaler
+  };
+
   return (
     <div
       className={getProductLayoutClasses(index)}
@@ -53,14 +61,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {product.sale_price ? (
             <>
               <span className="text-xs line-through text-gray-400">
-                {product.regular_price} SEK
+                {formatPrice(product.regular_price)} SEK
               </span>
               <br />
-              <span className="text-xs ml-2">{product.price} SEK</span>
+              <span className="text-xs ml-2">
+                {formatPrice(product.price)} SEK
+              </span>
             </>
           ) : (
             <span className="text-xs font-light leading-none tracking-[2.28px] text-[#1C1B1F]">
-              {product.price} SEK
+              {formatPrice(product.price)} SEK
             </span>
           )}
         </div>

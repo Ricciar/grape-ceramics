@@ -19,13 +19,28 @@ function App(): JSX.Element {
     <CartProvider>
       <Router>
         <Navbar />
+
         <main>
           <Routes>
+            {/* Route för startsidan */}
             <Route path="/" element={<MainPage />} />
+
+            {/* Route för kurser */}
             <Route path="/kurser" element={<CoursesPage />} />
+
+            {/* Route för butik */}
             <Route path="/butik" element={<ShopGrid1 />} />
+
+            {/* Route för produktsidan */}
             <Route path="/product/:id" element={<ProductWrapper />} />
+
+            {/* Route för kurssidan */}
+            <Route path="/kurs/:id" element={<ProductWrapper />} />
+
+            {/* Route för kontakt */}
             <Route path="/kontakt" element={<ContactPage />} />
+
+            {/* Route för FAQ */}
             <Route path="/faq" element={<FAQPage />} />
           </Routes>
         </main>

@@ -5,15 +5,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "cd client && npm install && npm run build",
-    "build:all": "npm run build",
-    "deploy": "npm run build:all && netlify deploy --prod",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "build:client:watch": "cd client && npm run build -- --watch",
-    "dev:auto": "concurrently \"npm run build:client:watch\" \"netlify dev\""
-  },
+  "dev": "concurrently \"cd client && npm run build -- --watch\" \"netlify dev\"",
+  "dev:netlify": "netlify dev",
+  "build": "cd client && npm install && npm run build",
+  "build:all": "npm run build",
+  "deploy": "npm run build:all && netlify deploy --prod",
+  "test": "jest",
+  "test:watch": "jest --watch"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

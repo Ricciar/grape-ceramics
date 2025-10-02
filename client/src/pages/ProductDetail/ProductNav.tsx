@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 
 interface ProductNavProps {
   loading?: boolean;
+  isCourse?: boolean;
 }
 
-const ProductNav: React.FC<ProductNavProps> = ({ loading = false }) => {
+const ProductNav: React.FC<ProductNavProps> = ({ loading = false, isCourse = false }) => {
   if (loading) {
     return (
       <div className="py-6" role="status">
@@ -17,15 +18,16 @@ const ProductNav: React.FC<ProductNavProps> = ({ loading = false }) => {
       </div>
     );
   }
+
   return (
     <div className="py-6">
       <Link
-        to="/butik"
+        to={isCourse ? "/kurser" : "/butik"}
         className="flex items-center space-x-2 text-[#575757] hover:text-gray-900 transition-colors"
       >
         <span className="text-lg">←</span>
         <span className="font-light tracking-[2.85px]">
-          Tillbaka till butiken
+          {isCourse ? "Tillbaka till kurser" : "Tillbaka till butiken"}
         </span>
       </Link>
     </div>

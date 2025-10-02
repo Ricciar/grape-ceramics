@@ -1,14 +1,27 @@
 // Typ för produktdata som hämtas från API:et
+export interface ProductImage {
+  src: string;
+  alt?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
-  images: string[]; // Array av bild-URL:er
+  images: { src: string; alt?: string }[];
   description: string;
-  regular_price: string | null;
-  sale_price: string | null;
-  price: string;
-  stock_quantity: string;
+
+  // 👇 nytt fält som följer Store API:s struktur
+  prices: {
+    price: number;
+    regular_price: number;
+    sale_price: number | null;
+    currency_code: string;
+  };
+
+  stock_quantity: string | null;
   stock_status: string;
+  short_description?: string;
+  tags?: { id: number; name: string; slug: string }[];
 }
 
 export interface ProductDetailProps {

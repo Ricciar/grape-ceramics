@@ -21,6 +21,14 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
     );
   };
 
+  // 🔥 Pris-funktion för säker formatering
+  const formatPrice = (price: string | null): string => {
+    if (!price) return "0";
+    const num = Number(price);
+    if (isNaN(num)) return price; // redan text
+    return num.toFixed(2); // två decimaler
+  };
+
   return (
     <div
       className="cursor-pointer group relative"
@@ -30,7 +38,7 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
       <div className="w-full h-[450px] bg-gray-100 overflow-hidden relative">
         <img
           src={product.images[currentIndex].src}
-          alt={product.images[currentIndex].alt}
+          alt={product.images[currentIndex].alt || product.name}
           loading="lazy"
           className="w-full h-full object-cover"
         />
@@ -66,14 +74,14 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
           {product.sale_price ? (
             <>
               <span className="text-xs line-through text-gray-400">
-                {product.regular_price} SEK
+                {formatPrice(product.regular_price)} SEK
               </span>
               <br />
-              <span className="text-xs ml-2">{product.price} SEK</span>
+              <span className="text-xs ml-2">{formatPrice(product.price)} SEK</span>
             </>
           ) : (
             <span className="text-xs font-light leading-none tracking-[2.28px] text-[#1C1B1F]">
-              {product.price} SEK
+              {formatPrice(product.price)} SEK
             </span>
           )}
         </div>

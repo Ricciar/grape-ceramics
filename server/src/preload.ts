@@ -16,18 +16,11 @@ export async function preloadAllWooData() {
   tasks.push(preloadCache('products', () => apiClient.getProducts(1, 12)));
 
   // Populära kategorier
-  tasks.push(
-    preloadCache('categories', () => apiClient.getProductCategories())
-  );
-
-  // Enskild produkt (ex. kampanj)
-  // tasks.push(preloadCache('product-123', () => apiClient.getProductById(123)));
+  tasks.push(preloadCache('categories', () => apiClient.getProductCategories()));
 
   // CMS-sidor som används ofta
   tasks.push(preloadCache('page-sidfot', () => fetchPageFromCMS('sidfot')));
-  tasks.push(
-    preloadCache('page-startsida', () => fetchPageFromCMS('startsida'))
-  );
+  tasks.push(preloadCache('page-startsida', () => fetchPageFromCMS('startsida')));
 
   await Promise.all(tasks);
   console.log('[PRELOAD] All WooCommerce data preloaded.');
@@ -36,7 +29,7 @@ export async function preloadAllWooData() {
 /**
  * preloadCache
  * ------------
- * Generisk funktion som hämtar och cachar data med nyckel.
+ * Generisk funktion som hämtar och cachar data med nyckel i ApiClient.cache.
  */
 async function preloadCache<T>(
   cacheKey: string,
@@ -44,8 +37,8 @@ async function preloadCache<T>(
 ): Promise<void> {
   try {
     const result = await fetchFn();
-    apiClient.setCache(cacheKey, result);
-    console.log(`[PRELOADED] ${cacheKey}`);
+    apiClient.cache.set(cacheKey, result); // ✅ lagras i ApiClient.cache
+    console.log(`[PRELOADED] ${cacheKey} (cached type=${typeof result})`);
   } catch (error) {
     if (error instanceof Error) {
       console.error(`[PRELOAD ERROR] ${cacheKey}:`, error.message);

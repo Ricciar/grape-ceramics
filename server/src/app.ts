@@ -31,7 +31,7 @@ app.use('/api', storeRoutes); // Woo Commerce
 app.use('/api/pages', pageRoutes); // WorPress sidor
 
 app.use((req, res, next) => {
-  console.log('INCOMING:', req.method, req.originalUrl);
+  console.log('INCOMING EXPRESS:', req.method, req.url, req.originalUrl);
   next();
 });
 

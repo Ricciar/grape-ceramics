@@ -4,11 +4,8 @@
  * innan den transformeras till vår interna produktmodell.
  */
 export interface ProductResponse {
-  // Samma typ av strukturell information som i Product, fast anpassat till hur API:t svarar
   id: number;
   name: string;
-
-  // Här är images en array av objekt, där varje objekt har en egenskap 'src'
   images: ProductImages[];
   description: string;
   short_description: string;
@@ -20,8 +17,9 @@ export interface ProductResponse {
   categories: {
     id: number;
     name: string;
+    slug?: string; // WooCommerce kan returnera slug
   }[];
-  tags: FeaturedProduct[];
+  tags: ProductTag[];
 }
 
 export interface ProductImages {
@@ -50,10 +48,24 @@ export interface Product {
   categories: {
     id: number;
     name: string;
+    slug?: string;
   }[];
-  tags: FeaturedProduct[];
+  tags: ProductTag[];
 }
 
+/**
+ * Enkel struktur för WooCommerce-taggar på produkter
+ */
+export interface ProductTag {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+/**
+ * FeaturedProduct är något helt separat (ex. när du listar
+ * populära taggar eller kategorier med extra data).
+ */
 export interface FeaturedProduct {
   id: number;
   name: string;
