@@ -8,7 +8,6 @@ import DesktopProductCard from './DesktopProductCard';
 import SkeletonProductCard from './SkeletonProductCard';
 import SkeletonDesktopProductCard from './SkeletonDesktopProductCard';
 import filtericon from '../../assets/filtericon.svg';
-import Container from "../../components/Container";
 
 const ShopGrid1: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
@@ -65,7 +64,7 @@ const ShopGrid1: React.FC = () => {
   const desktopSkeletonIndices = Array.from({ length: 9 }, (_, index) => index);
 
   return (
-    <Container className="p-[1px]">
+    <div className="p-[1px] max-w-6xl mx-auto">
       <div className="flex ml-[50px]">
         {loading ? (
           <div className="p-3" role="status">
@@ -89,22 +88,21 @@ const ShopGrid1: React.FC = () => {
         onFilterProducts={handleFilterProducts}
       />
 
-        {/* Mobil layout */}
-        <div className="grid grid-cols-2 auto-rows-auto gap-[2px] lg:hidden">
-          {loading
-            ? mobileSkeletonIndices.map((index) => (
-                <SkeletonProductCard key={index} index={index} />
-              ))
-            : filteredProducts.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={index}
-                  onClick={navigateToProduct}
-                />
-              ))}
-        </div>
-
+      {/* Mobil layout */}
+      <div className="grid grid-cols-2 auto-rows-auto gap-[2px] px-[2px] lg:hidden">
+        {loading
+          ? mobileSkeletonIndices.map((index) => (
+              <SkeletonProductCard key={index} index={index} />
+            ))
+          : filteredProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                index={index}
+                onClick={navigateToProduct}
+              />
+            ))}
+      </div>
 
       {/* Desktop – grid */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-[1px]">
@@ -120,7 +118,7 @@ const ShopGrid1: React.FC = () => {
               />
             ))}
       </div>
-    </Container>
+    </div>
   );
 };
 

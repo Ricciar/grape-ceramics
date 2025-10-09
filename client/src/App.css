@@ -21,3 +21,8 @@
     margin-top: 24px !important;
   }
 }
+/* lägg i client/src/App.css eller motsvarande globala css */
+.detail-top {
+  margin-top: 12px !important; /* exakt samma under 'Tillbaka...' överallt */
+}
+

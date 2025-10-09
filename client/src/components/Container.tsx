@@ -1,12 +1,18 @@
-// client/src/components/Container.tsx
-import React from "react";
+// Container.tsx
+import clsx from "clsx";
 
-type Props = React.PropsWithChildren<{ className?: string }>;
+type Props = { className?: string; children: React.ReactNode };
 
-export default function Container({ children, className = "" }: Props) {
-  // 30px gutter on both sides, but never wider than 1200px overall
+export default function Container({ className, children }: Props) {
   return (
-    <div className={`mx-auto w-full max-w-[min(1200px,calc(100%-60px))] px-0 ${className}`}>
+    <div
+      className={clsx(
+        // SÄNK sid-padding ~20px jämfört med tidigare
+        // Ex: om du hade px-[30px], byt till px-[10px]
+        "mx-auto w-full max-w-[1200px] px-[10px] sm:px-[16px] md:px-[20px]", 
+        className
+      )}
+    >
       {children}
     </div>
   );

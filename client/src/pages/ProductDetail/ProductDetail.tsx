@@ -7,7 +7,6 @@ import Button from "../../components/Button";
 import useCart from "../../components/Cart/UseCart";
 import { Product, ProductDetailProps } from "../shopgrid/types";
 import OrderRequestModal from "./OrderRequestModal";
-import Container from "../../components/Container";
 
 interface ExtendedProductDetailProps extends ProductDetailProps {
   isCourse?: boolean;
@@ -86,12 +85,16 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
 
   const nextImage = () => {
     if (!multipleImages) return;
-    setCurrentImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+    setCurrentImageIndex((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
   };
 
   const prevImage = () => {
     if (!multipleImages) return;
-    setCurrentImageIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -107,9 +110,9 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
   };
 
   return (
-    <Container>
-      {/* Tillbaka-länk – konsekvent marginal nedåt */}
-      <div className="pt-6 md:pt-8 pb-2 md:pb-2 mb-6 md:mb-8 z-10 relative">
+    <div className="p-[1px] max-w-6xl mx-auto px-[2px] mb-10">
+      {/* Back-länk: kontrollerad spacing */}
+      <div className="pt-6 pb-2 md:pt-8 md:pb-2 z-10 relative">
         <Link
           to={isCourse ? "/kurser" : "/butik"}
           className="inline-block text-[#575757] hover:text-gray-900 transition-colors font-light tracking-[2.85px]"
@@ -118,20 +121,14 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </Link>
       </div>
 
-      {/* Huvudinnehåll */}
-      <div
-        className="
-          mt-0 flex flex-col items-start
-          lg:flex-row lg:items-start lg:justify-around lg:gap-[12rem]
-          mb-[1px]
-        "
-      >
+      {/* Huvudlayout – samma sidmarginallogik som övriga sidor */}
+      <div className="mt-0 flex flex-col items-center lg:flex-row lg:items-start lg:justify-between lg:gap-16 mb-10">
         {/* ---------- BILDER ---------- */}
-        <div className="w-full lg:w-1/2 flex flex-col mt-0">
+        <div className="w-full lg:max-w-[600px] flex flex-col mt-0">
           {hasImages ? (
             <>
               <div
-                className="relative w-full lg:w-[600px] h-[450px] lg:h-[645px] overflow-hidden"
+                className="relative w-full h-[450px] lg:h-[645px] overflow-hidden"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
@@ -161,8 +158,9 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                 )}
               </div>
 
+              {/* Miniatyrer – med luft nedåt så footern inte klistrar sig */}
               {product.images.length > 1 && (
-                <div className="flex mt-4 space-x-2 overflow-x-auto">
+                <div className="flex mt-4 space-x-2 overflow-x-auto mb-10">
                   {product.images.map((img, idx) => (
                     <img
                       key={idx}
@@ -170,7 +168,9 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                       alt={img.alt || `Image ${idx + 1}`}
                       onClick={() => setCurrentImageIndex(idx)}
                       className={`w-20 h-20 object-cover cursor-pointer border ${
-                        currentImageIndex === idx ? "border-gray-600" : "border-transparent"
+                        currentImageIndex === idx
+                          ? "border-gray-600"
+                          : "border-transparent"
                       }`}
                     />
                   ))}
@@ -185,7 +185,7 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </div>
 
         {/* ---------- INFO ---------- */}
-        <div className="flex flex-col items-start w-full lg:w-1/2 lg:items-start max-w-[290px] lg:max-w-none font-light tracking-[2.85px]">
+        <div className="flex flex-col items-center w-full lg:max-w-[600px] lg:items-start font-light tracking-[2.85px]">
           <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
             {product.name}
           </h1>
@@ -199,7 +199,10 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
               {product.stock_status === "instock" ? (
                 <span>
                   I lager{" "}
-                  {product.stock_quantity !== null ? `${product.stock_quantity}` : ""} st
+                  {product.stock_quantity !== null
+                    ? `${product.stock_quantity}`
+                    : ""}{" "}
+                  st
                 </span>
               ) : (
                 <div className="flex self-end items-center justify-center">
@@ -235,7 +238,8 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
             className="w-[292px] h-[55px] mb-5"
             onClick={() => {
               if (product.stock_status === "instock") {
-                const primaryImage = product.images.length > 0 ? product.images[0].src : "";
+                const primaryImage =
+                  product.images.length > 0 ? product.images[0].src : "";
                 addToCart(
                   {
                     id: product.id,
@@ -263,7 +267,7 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         isOpen={isOrderRequestModalOpen}
         onClose={() => setIsOrderRequestModalOpen(false)}
       />
-    </Container>
+    </div>
   );
 };
 

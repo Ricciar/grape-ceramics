@@ -10,3 +10,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Put this at the bottom of index.css */
+:root {
+  /* tweak this to fine-tune alignment with “B” and the cart */
+  --page-x: clamp(20px, 4vw, 50px);
+}
+
+/* Utility class for consistent horizontal padding */
+.page-x {
+  padding-left: var(--page-x);
+  padding-right: var(--page-x);
+}
