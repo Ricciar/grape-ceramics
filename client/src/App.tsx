@@ -13,6 +13,9 @@ import ShopGrid1 from './pages/shopgrid/ShopGrid1';
 import ContactPage from './pages/Contact/ContactPage';
 import Footer from './components/Footer/Footer';
 import FAQPage from './pages/FAQ/FAQPage';
+console.log("🟢 App.tsx körs, window.location.pathname =", window.location.pathname);
+
+
 
 function App(): JSX.Element {
   return (

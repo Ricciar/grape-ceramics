@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ProductCardProps } from './types';
+
+const SWIPE_THRESHOLD = 50; // px
 
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
@@ -7,22 +9,44 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
-  const mainImage = product.images[0]?.src;
-  const hoverImage = product.images[1]?.src;
+  const images = product.images || [];
+  const mainImage = images[currentImageIndex]?.src;
+  const hoverImage = images[1]?.src;
 
-  // Säkerställ att priser alltid visas korrekt
   const formatPrice = (price: string | null): string => {
     if (!price) return '0';
     const num = Number(price);
-    if (isNaN(num)) return price; // om det redan är text
-    return Math.round(num).toString(); // heltal utan decimaler
+    if (isNaN(num)) return price;
+    return Math.round(num).toString();
   };
 
-  // 📌 Mobil: var 5:e produkt ska ta hela bredden
-  const mobileLayout =
-    index % 5 === 4 ? 'col-span-2' : 'col-span-1';
+  // 📱 Swipe-start
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
 
+  // 📱 Swipe-end
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!images.length || touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (deltaX > SWIPE_THRESHOLD) {
+      // swipe höger → föregående bild
+      setCurrentImageIndex((prev) =>
+        prev === 0 ? images.length - 1 : prev - 1
+      );
+    } else if (deltaX < -SWIPE_THRESHOLD) {
+      // swipe vänster → nästa bild
+      setCurrentImageIndex((prev) =>
+        prev === images.length - 1 ? 0 : prev + 1
+      );
+    }
+    touchStartX.current = null;
+  };
+
+  const mobileLayout = index % 5 === 4 ? 'col-span-2' : 'col-span-1';
 
   return (
     <div
@@ -33,25 +57,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
     >
       {/* Produktbild */}
       <div
-      className="w-full aspect-[4/5] bg-gray-100 overflow-hidden relative"
->
-      <img
-        src={isHovered && hoverImage ? hoverImage : mainImage}
-        alt={product.images[0]?.alt || product.name}
-        loading="lazy"
-        className="w-full h-full object-cover transition duration-300"
-      />
+        className="w-full aspect-[4/5] bg-gray-100 overflow-hidden relative"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <img
+          src={mainImage}
+          alt={product.images[0]?.alt || product.name}
+          loading="lazy"
+          className="w-full h-full object-cover transition duration-300"
+        />
 
-      {/* Pil-overlay – visas bara vid hover om det finns fler bilder */}
-      {/* Pil-overlay – visas bara på desktop vid hover */}
-      {isHovered && hoverImage && (
-        <div className="hidden md:flex absolute inset-0 items-center justify-center bg-black bg-opacity-30">
-          <span className="text-white text-3xl">➜</span>
-        </div>
-      )}
-
-    </div>
-
+        {/* Pil-overlay – visas bara på desktop vid hover */}
+        {isHovered && hoverImage && (
+          <div className="hidden md:flex absolute inset-0 items-center justify-center bg-black bg-opacity-30">
+            <span className="text-white text-3xl">➜</span>
+          </div>
+        )}
+      </div>
 
       {/* Produktnamn och pris */}
       <div className="mt-2 ml-3 flex flex-col justify-between">

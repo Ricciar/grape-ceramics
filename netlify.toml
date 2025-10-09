@@ -3,33 +3,25 @@ base = ""
 command = "npm run build"
 publish = "client/dist"
 
-# Express backend
 [functions]
 directory = "server/netlify/functions"
 
-[functions."preload"]
-schedule = "*/5 * * * *"
-
-# ✅ Särskild redirect för kurser först
 [[redirects]]
 from = "/api/courses"
 to = "/.netlify/functions/api/courses"
 status = 200
 
-# API-omdirigeringar för Express-app (alla andra endpoints)
 [[redirects]]
 from = "/api/*"
 to = "/.netlify/functions/api"
 status = 200
 
-# 👇 fångar upp /product/:id för kurser
 [[redirects]]
 from = "/product/:id"
 to = "/kurs/:id"
 status = 301
 force = true
 
-# SPA fallback
 [[redirects]]
 from = "/*"
 to = "/index.html"

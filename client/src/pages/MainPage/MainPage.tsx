@@ -1,121 +1,131 @@
-import React, { useState, useEffect } from 'react';
-import { useMemo } from 'react';
-import axios from 'axios';
-import { isAbort } from '../../utils/abort';
-import { sanitizeWP } from '../../utils/sanitizeWP';
-import { getVideoPartsFromWP } from '../../utils/wordpress';
-import { WPPage } from './types';
-import { Product, FeaturedProducts } from '../shopgrid/types';
-import { SkeletonMainPage } from './SkeletonMainPage';
-import { useIsAdminMode } from '../../hooks/useIsAdminMode';
+import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios";
+import { isAbort } from "../../utils/abort";
+import { sanitizeWP } from "../../utils/sanitizeWP";
+import { getVideoPartsFromWP } from "../../utils/wordpress";
+import { WPPage } from "./types";
+import { Product, FeaturedProducts } from "../shopgrid/types";
+import DOMPurify from "dompurify";
+import { SkeletonMainPage } from "./SkeletonMainPage";
+import Container from "../../components/Container";
 
-// ------------------------------------------------------------
-// Presentationskomponent: VideoBlock (återanvänds mobil/desktop)
-// ------------------------------------------------------------
+const capitalizeFirstLetter = (str: string): string =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
 
-function VideoBlock({
-  src,
-  className = '',
-}: {
-  src: string;
-  className?: string;
-}) {
-  if (!src) return null;
-  return (
-    <div className={className}>
-      <video
-        key={src}
-        src={src}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        className="w-full h-auto block"
-      >
-        Din webbläsare stödjer inte HTML5 video.
-      </video>
-    </div>
+const formatPrice = (price: string | null): string => {
+  if (!price) return "";
+  const num = Number(price);
+  if (isNaN(num)) return price;
+  return `${Math.round(num)} SEK`;
+};
+
+const isCourse = (p: Product): boolean => {
+  return (p.categories || []).some(
+    (c: any) =>
+      c.slug?.toLowerCase() === "kurser" || c.name?.toLowerCase() === "kurser"
   );
-}
+};
 
-// ------------------------------------------------------------
-// Produktkort
-// ------------------------------------------------------------
-
-// Mobile/Tablet Product Card Component
-const MobileProductCard = ({
-  product,
-  showDescription = false,
-}: {
-  product: Product;
-  showDescription?: boolean;
-}) => {
+/**
+ * Produktkort för startsidan — hanterar både vanliga produkter och kurser.
+ * Kurser visar textöverlägg hela tiden.
+ */
+const FeaturedProductCard = ({ product }: { product: Product }) => {
   const mainImage = product.images?.[0];
-  const alt = mainImage?.alt || product.name || 'Produkt';
+  const imageUrl = mainImage?.src || "";
+  const alt = mainImage?.alt || product.name || "Produkt";
+  const soldOut = product.stock_status === "outofstock";
 
-  return (
-    <div className="relative w-full h-[236px] md:h-[321px] overflow-hidden">
-      {mainImage ? (
-        <img
-          src={mainImage.src}
-          alt={alt}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-          <span className="text-gray-500">Ingen bild tillgänglig</span>
-        </div>
-      )}
-
-      <a
-        href={`/product/${product.id}`}
-        className="block absolute inset-0 group focus:outline-none"
-        aria-label={`Visa produkt: ${product.name}`}
+  const CourseCard = () => (
+    <div className="flex flex-col w-full">
+      <div
+        className={`relative w-full h-[390px] md:h-[321px] overflow-hidden group ${
+          soldOut ? "opacity-70" : ""
+        }`}
+        aria-label={alt}
       >
-        <div className="absolute inset-0 flex items-center justify-center p-4 bg-black bg-opacity-20 transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0">
-          {showDescription && product.short_description ? (
-            <div className="text-white font-light font-sans text-center tracking-custom-wide-2">
-              <h3 className="text-[16px] uppercase tracking-widest mb-2">
-                {product.name}
+        {/* Bild som kan skala på hover */}
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={alt}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+            <span className="text-gray-500 text-xs font-light -tracking-custom-wide-xs">
+              Ingen bild
+            </span>
+          </div>
+        )}
+
+        {/* Slutsåld-badge */}
+        {soldOut && (
+          <div className="absolute bottom-3 left-3 bg-custom-gray text-white px-2 py-1 text-sm font-light z-20 tracking-custom-wide-2">
+            Slutsåld
+          </div>
+        )}
+
+        {/* Länk + alltid synlig textoverlay */}
+        <a href={`/kurs/${product.id}`} className="block absolute inset-0 focus:outline-none">
+          <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/30">
+            <div className="text-white font-light font-sans tracking-custom-wide-xs text-center">
+              <h3 className="text-[22px] md:text-[31px] tracking-widest mb-2">
+                {capitalizeFirstLetter(product.name)}
               </h3>
-              <div
-                className="text-sm"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeWP(product.short_description),
-                }}
-              />
+
+              {product.short_description && (
+                <div
+                  className="text-sm font-[300] font-['Rubik']"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(product.short_description),
+                  }}
+                />
+              )}
             </div>
-          ) : null}
-        </div>
-      </a>
+          </div>
+        </a>
+      </div>
+
+      <div className="mt-2 ml-3 mb-2 flex flex-row justify-between md:mt-4 md:mb-4 mr-3">
+        <h3 className="text-xs font-sans font-light tracking-custom-wide-xs">
+          {capitalizeFirstLetter(product.name)}
+        </h3>
+        {product.price && (
+          <p
+            className={`font-sans font-light text-xs tracking-custom-wide-xs ${
+              soldOut ? "line-through text-gray-500" : ""
+            }`}
+          >
+            {formatPrice(product.price)}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  // Kurskort
+  if (isCourse(product)) return <CourseCard />;
+
+  // Vanliga produkter – zoom på hover + klipp kanter
+  return (
+    <div
+      className="relative cursor-pointer group overflow-hidden"
+      onClick={() => (window.location.href = `/product/${product.id}`)}
+    >
+      <img
+        src={imageUrl}
+        alt={alt}
+        className="w-full h-[390px] md:h-[321px] object-cover transition-transform duration-500 group-hover:scale-105"
+      />
     </div>
   );
 };
 
-// Desktop Product Card Component
-const DesktopProductCard = ({
-  product,
-  showDescription = false,
-}: {
-  product: Product;
-  showDescription?: boolean;
-}) => {
-  return (
-    <MobileProductCard product={product} showDescription={showDescription} />
-  );
-};
 
-// ------------------------------------------------------------
-// Huvudkomponent
-// ------------------------------------------------------------
 const MainPage: React.FC = () => {
-  const isAdminMode = useIsAdminMode();
-
-  // Content-state
   const [homePage, setHomePage] = useState<WPPage | null>(null);
+  const [infoSection, setInfoSection] = useState<WPPage | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProducts>({
     one: null,
     two: null,
@@ -124,99 +134,44 @@ const MainPage: React.FC = () => {
     five: null,
     six: null,
   });
-  const [infoSection, setInfoSection] = useState<WPPage | null>(null);
-
-  // UI-state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    let mounted = true; // skyddar mot setState efter unmount
+    let mounted = true;
 
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
-
-        const featuredTags = [
-          'featured-one',
-          'featured-two',
-          'featured-three',
-          'featured-four',
-          'featured-five',
-          'featured-six',
-        ];
-
-        // Fetch startsida for video block
-        const homePageRequest = axios.get(`/api/pages`, {
-          params: { slug: 'startsida' },
-          signal: controller.signal,
-          timeout: 15000,
-        });
-
-        // Fetch infosida
-        const infoPageRequest = axios.get(`/api/pages`, {
-          params: { slug: 'info' },
-          signal: controller.signal,
-          timeout: 15000,
-        });
-
-        // Fetch alla produkter
-        const allProductsRequest = axios.get(`/api/products`, {
-          params: {
-            per_page: 100,
-          },
-          signal: controller.signal,
-          timeout: 20000,
-        });
-
-        const [homeResponse, infoPageResponse, allProductsResponse] =
-          await Promise.all([
-            homePageRequest,
-            infoPageRequest,
-            allProductsRequest,
-          ]);
-
-        console.log(
-          '[fetchData] homeResponse.data length:',
-          homeResponse.data?.length
-        );
-        console.log(
-          '[fetchData] infoPageResponse.data length:',
-          infoPageResponse.data?.length
-        );
-
-        const first = homeResponse.data?.[0];
-        console.log(
-          '[fetchData] first page keys:',
-          first ? Object.keys(first) : 'none'
-        );
-        console.log(
-          '[fetchData] first.content?.rendered length:',
-          first?.content?.rendered?.length ?? 0
-        );
-        console.log(
-          '[fetchData] first.content?.rendered start:',
-          first?.content?.rendered?.slice?.(0, 400) ?? ''
-        );
+        const [homeRes, infoRes, allProductsRes] = await Promise.all([
+          axios.get(`/api/pages`, {
+            params: { slug: "startsida" },
+            signal: controller.signal,
+          }),
+          axios.get(`/api/pages`, {
+            params: { slug: "info" },
+            signal: controller.signal,
+          }),
+          axios.get(`/api/products`, {
+            params: { per_page: 100, includeCourses: true },
+            signal: controller.signal,
+          }),
+        ]);
 
         if (!mounted) return;
 
-        // Produkter
-        const allProducts: Product[] = allProductsResponse.data.products || [];
-
-        // Bygg featured - undvik dubbletter
-        const positions = [
-          'one',
-          'two',
-          'three',
-          'four',
-          'five',
-          'six',
-        ] as const;
-        const used = new Set<number>();
-        const nextFeatured: FeaturedProducts = {
+        const allProducts: Product[] = allProductsRes.data.products || [];
+        const tags = [
+          "featured-one",
+          "featured-two",
+          "featured-three",
+          "featured-four",
+          "featured-five",
+          "featured-six",
+        ];
+        const keys = ["one", "two", "three", "four", "five", "six"] as const;
+        const next: FeaturedProducts = {
           one: null,
           two: null,
           three: null,
@@ -225,263 +180,88 @@ const MainPage: React.FC = () => {
           six: null,
         };
 
-        featuredTags.forEach((tagSlug, index) => {
-          const product = allProducts.find(
-            (p) => !used.has(p.id) && p.tags?.some((t) => t.slug === tagSlug)
-          );
-          const key = positions[index];
-          nextFeatured[key] = product ?? null;
-          if (product) used.add(product.id);
+        keys.forEach((key, i) => {
+          const prod =
+            allProducts.find((p) => p.tags?.some((t) => t.slug === tags[i])) ??
+            null;
+          next[key] = prod;
         });
 
-        // Sidor
-        if (homeResponse.data.length > 0) {
-          setHomePage(homeResponse.data[0]);
-        }
-        setFeaturedProducts(nextFeatured);
-
-        if (infoPageResponse.data.length > 0) {
-          setInfoSection(infoPageResponse.data[0]);
-        } else if (homeResponse.data.length > 0) {
-          // Fallback if no info page exists
-          setInfoSection(homeResponse.data[0]);
-        }
+        if (homeRes.data.length > 0) setHomePage(homeRes.data[0]);
+        if (infoRes.data.length > 0) setInfoSection(infoRes.data[0]);
+        setFeaturedProducts(next);
       } catch (err) {
-        if (isAbort(err)) return;
-        console.error('Error fetching data:', err);
-        if (mounted) setError('Det gick inte att hämta innehållet.');
+        if (!isAbort(err)) setError("Kunde inte hämta innehållet.");
       } finally {
-        if (mounted) setLoading(false);
+        mounted && setLoading(false);
       }
     };
 
     fetchData();
-
     return () => {
       mounted = false;
       controller.abort();
     };
   }, []);
 
-  // Derivera video-delar från startsidans HTML
-  const { src: videoSrc } = useMemo(() => {
-    if (!homePage?.content?.rendered) return { src: '' };
+  const videoSrc = useMemo(() => {
+    if (!homePage?.content?.rendered) return "";
     return getVideoPartsFromWP(
       homePage.content.rendered,
-      'https://www.grapeceramics.se'
-    );
-  }, [homePage?.content?.rendered]);
+      window.location.origin
+    ).src;
+  }, [homePage]);
 
-  // Konvertera featured till array för rendering
-  const featuredProductsArray = useMemo(
-    () =>
-      [
-        featuredProducts.one,
-        featuredProducts.two,
-        featuredProducts.three,
-        featuredProducts.four,
-        featuredProducts.five,
-        featuredProducts.six,
-      ].filter((p): p is Product => p !== null),
-    [featuredProducts]
-  );
+  const featured = [
+    featuredProducts.one,
+    featuredProducts.two,
+    featuredProducts.three,
+    featuredProducts.four,
+    featuredProducts.five,
+    featuredProducts.six,
+  ].filter((p): p is Product => !!p);
 
-  if (isAdminMode && featuredProductsArray.length < 6) {
-    // Hjälpsam logg i admin-läge
-    console.warn(
-      `⚠️ Endast ${featuredProductsArray.length} av 6 utvalda produkter hittades.`
-    );
-  }
-
-  if (loading) {
-    return <SkeletonMainPage />;
-  }
-
-  if (error) {
-    return <div className="text-center p-8">{error}</div>;
-  }
+  if (loading) return <SkeletonMainPage />;
+  if (error) return <div className="text-center p-8">{error}</div>;
 
   return (
-    <div className="w-full max-w-full ml-[2px] mr-[2px] overflow-hidden">
-      {/* ---- Mobile/Tablet Layout ---- */}
+    // 🟢 Samma yttre container som butiken
+     <Container className="p-[1px]">
+      {videoSrc && (
+        <video
+          src={videoSrc}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-[320px] md:h-[380px] lg:h-[420px] object-cover"
+        />
+      )}
 
-      <div className="flex flex-col md:hidden">
-        {/* VIDEO */}
-        <div className="w-full bg-gray-100 h-full mt-[2px] mb-[2px] z-0">
-          {videoSrc ? (
-            <VideoBlock src={videoSrc} />
-          ) : isAdminMode ? (
-            <div className="bg-white p-4 text-yellow-800 text-center">
-              ⚠️ Videoinnehåll saknas. Lägg till ett videoblock på startsidan i
-              WordPress.
-            </div>
-          ) : null}
-        </div>
-
-        {/* First Row of Products */}
-        {featuredProductsArray.length >= 2 && (
-          <div className="w-full grid grid-cols-2 gap-[1px] z-10">
-            {featuredProductsArray[0] && (
-              <MobileProductCard
-                product={featuredProductsArray[0]}
-                showDescription={true}
-              />
-            )}
-            {featuredProductsArray[1] && (
-              <MobileProductCard
-                product={featuredProductsArray[1]}
-                showDescription={false}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Info Section */}
-        {infoSection ? (
-          <div className="w-full bg-[#DFCABB] py-8 px-4 text-center min-h-[225px] md:h-[456px] flex items-center justify-center ml-[2px] mr-[2px] z-10">
-            <div className="max-w-4xl mx-auto">
-              <h2
-                className="text-2xl uppercase tracking-custom-wide-2 text-gray-800 mb-6"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeWP(infoSection.title.rendered),
-                }}
-              />
-              <div
-                className="text-gray-700 text-sm tracking-custom-wide-2 leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeWP(infoSection.content.rendered),
-                }}
-              />
-            </div>
-          </div>
-        ) : isAdminMode ? (
-          <div className="bg-white p-4 text-yellow-800 text-center">
-            ⚠️ Info-sektionen saknas. Kontrollera att en sida med slug
-            &quot;info&quot; finns.
-          </div>
-        ) : null}
-
-        {/* Second Row of Products (only mobile) */}
-        {featuredProductsArray.length >= 4 && (
-          <div className="w-full grid grid-cols-2 gap-[2px] mb-[2px] z-10 md:hidden">
-            {featuredProductsArray[2] && (
-              <MobileProductCard
-                product={featuredProductsArray[2]}
-                showDescription={true}
-              />
-            )}
-            {featuredProductsArray[3] && (
-              <MobileProductCard
-                product={featuredProductsArray[3]}
-                showDescription={true}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Third Row of Products (only mobile) */}
-        {featuredProductsArray.length >= 6 && (
-          <div className="w-full grid grid-cols-2 pl-[2px] pr-[2px] pb-[2px] gap-[2px] z-10 md:hidden">
-            {featuredProductsArray[4] && (
-              <MobileProductCard
-                product={featuredProductsArray[4]}
-                showDescription={false}
-              />
-            )}
-            {featuredProductsArray[5] && (
-              <MobileProductCard
-                product={featuredProductsArray[5]}
-                showDescription={false}
-              />
-            )}
-          </div>
-        )}
+      {/* 🔹 Första raden – samma grid-gaps/padding som butiken */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] mt-[2px]">
+        {featured.slice(0, 3).map((p, i) => (
+          <FeaturedProductCard key={i} product={p} />
+        ))}
       </div>
 
-      {/* ---- Desktop Layout ---- */}
-      <div className="hidden md:flex md:flex-col">
-        {/* Video Section */}
-        <div className="w-full pt-[2px] pl-[2px] pr-[2px] z-0">
-          {videoSrc && (
-            <VideoBlock
-              src={videoSrc}
-              className="w-full max-h-[400px] overflow-hidden"
-            />
-          )}
-        </div>
+      {/* 🔹 Info-sektion – behåll men lägg kvar inom container */}
+      {infoSection?.content?.rendered && (
+        <div
+          className="w-full text-center px-8 py-12 bg-[#DFCABB] text-[#1C1B1F] font-light tracking-[2.28px] my-[2px]"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeWP(infoSection.content.rendered),
+          }}
+        />
+      )}
 
-        {/* First Row of Products */}
-        {featuredProductsArray.length >= 3 && (
-          <div className="w-full grid grid-cols-3 p-[2px] gap-[2px] z-10">
-            {featuredProductsArray[0] && (
-              <DesktopProductCard
-                product={featuredProductsArray[0]}
-                showDescription={true}
-              />
-            )}
-            {featuredProductsArray[1] && (
-              <DesktopProductCard
-                product={featuredProductsArray[1]}
-                showDescription={false}
-              />
-            )}
-            {/* Third product shown in desktop layout row 1 but not in mobile layout row 1 */}
-            {featuredProductsArray[2] && (
-              <div className="hidden md:block">
-                <DesktopProductCard
-                  product={featuredProductsArray[2]}
-                  showDescription={false}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Info Section */}
-        {infoSection && (
-          <div className="w-full bg-[#DFCABB] py-8 px-4 tracking-custom-wide-2 text-center text-sans min-h-[456px] flex items-center justify-center z-10">
-            <div className="max-w-4xl mx-auto">
-              <h2
-                className="text-[18px] uppercase tracking-custom-wider-2 text-gray-800 mb-6"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeWP(infoSection.title.rendered),
-                }}
-              />
-              <div
-                className="text-gray-800 text-[16px] tracking-custom-wide-2 md:text-base leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeWP(infoSection.content.rendered),
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Second Row of Products - Desktop only with products 3-6 in one row */}
-        {featuredProductsArray.length >= 6 && (
-          <div className="hidden md:grid md:grid-cols-3 md:gap-[2px] p-[2px] z-10">
-            {featuredProductsArray[3] && (
-              <DesktopProductCard
-                product={featuredProductsArray[3]}
-                showDescription={true}
-              />
-            )}
-            {featuredProductsArray[4] && (
-              <DesktopProductCard
-                product={featuredProductsArray[4]}
-                showDescription={false}
-              />
-            )}
-            {featuredProductsArray[5] && (
-              <DesktopProductCard
-                product={featuredProductsArray[5]}
-                showDescription={false}
-              />
-            )}
-          </div>
-        )}
+      {/* 🔹 Andra raden */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] mb-[2px]">
+        {featured.slice(3, 6).map((p, i) => (
+          <FeaturedProductCard key={i + 3} product={p} />
+        ))}
       </div>
-    </div>
+    </Container>
   );
 };
 

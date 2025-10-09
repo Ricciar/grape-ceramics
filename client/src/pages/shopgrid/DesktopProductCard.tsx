@@ -21,13 +21,15 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
     );
   };
 
-  // 🔥 Pris-funktion för säker formatering
+  
+  // 🔥 Pris-funktion för säker formatering (utan decimaler)
   const formatPrice = (price: string | null): string => {
     if (!price) return "0";
     const num = Number(price);
     if (isNaN(num)) return price; // redan text
-    return num.toFixed(2); // två decimaler
+    return Math.round(num).toString(); // heltal utan decimaler
   };
+
 
   return (
     <div

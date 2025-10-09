@@ -1,16 +1,16 @@
-import axios from 'axios';
-import { config } from '../config/environment.js';
-import { Config } from '../config/types/config.js';
-import { ProductResponse } from '../controllers/types/product.types.js';
-import { CategoryResponse } from '../controllers/types/category.types.js';
+import axios from "axios";
+import { config } from "../config/environment.js";
+import { Config } from "../config/types/config.js";
+import { ProductResponse } from "../controllers/types/product.types.js";
+import { CategoryResponse } from "../controllers/types/category.types.js";
 import {
   WooCommerceOrderRequest,
   WooCommerceOrderResponse,
-} from '../controllers/types/order.types.js';
-import NodeCache from 'node-cache';
+} from "../controllers/types/order.types.js";
+import NodeCache from "node-cache";
 
-const COURSE_TAG_SLUGS = ['courses-one', 'courses-two', 'courses-three', 'courses-four'];
-const COURSE_CATEGORY_SLUGS = ['kurser', 'kurs', 'course', 'courses'];
+const COURSE_TAG_SLUGS = ["courses-one", "courses-two", "courses-three", "courses-four"];
+const COURSE_CATEGORY_SLUGS = ["kurser", "kurs", "course", "courses"];
 
 export class ApiClient {
   private readonly config: Config;
@@ -34,52 +34,43 @@ export class ApiClient {
     };
   }
 
-  /**
-   * Normaliserar ett WooCommerce-pris.
-   * Returnerar tom sträng om inget pris finns.
-   */
   private normalizePrice(value: any): string {
-    if (value === undefined || value === null || value === '') return '';
-
+    if (value === undefined || value === null || value === "") return "";
     const num = Number(value);
-    if (isNaN(num) || num === 0) return '';
+    if (isNaN(num) || num === 0) return "";
 
-    // Woo kan skicka pris i ören (t.ex. 399000 i stället för 3990.00)
     if (num > 10000) {
-      return (num / 100).toFixed(2).replace(/\.00$/, '');
+      return (num / 100).toFixed(2).replace(/\.00$/, "");
     }
 
     return String(num);
   }
 
   private pickNumericPrice(product: any): string {
-    // Store API form (korrekt i kronor)
     const storeApiSale = product?.prices?.sale_price;
     const storeApiPrice = product?.prices?.price;
-
     if (storeApiSale) return this.normalizePrice(storeApiSale);
     if (storeApiPrice) return this.normalizePrice(storeApiPrice);
 
-    // Fallback: REST v3
     const restSale = product?.sale_price;
     const restPrice = product?.price;
     const restRegular = product?.regular_price;
-
     if (restSale) return this.normalizePrice(restSale);
     if (restPrice) return this.normalizePrice(restPrice);
     if (restRegular) return this.normalizePrice(restRegular);
-
-    return '';
+    return "";
   }
 
   private normalizeProduct<T extends Record<string, any>>(product: T): T {
     return {
       ...product,
-      // alltid rätt baspris
       price: this.pickNumericPrice(product),
-      // bara inkludera om de finns
-      regular_price: product?.regular_price ? this.normalizePrice(product.regular_price) : null,
-      sale_price: product?.sale_price ? this.normalizePrice(product.sale_price) : null,
+      regular_price: product?.regular_price
+        ? this.normalizePrice(product.regular_price)
+        : null,
+      sale_price: product?.sale_price
+        ? this.normalizePrice(product.sale_price)
+        : null,
     };
   }
 
@@ -87,7 +78,8 @@ export class ApiClient {
     const tags = Array.isArray(product?.tags) ? product.tags : [];
     return tags.some(
       (t: any) =>
-        typeof t?.slug === 'string' && COURSE_TAG_SLUGS.includes(t.slug.toLowerCase().trim())
+        typeof t?.slug === "string" &&
+        COURSE_TAG_SLUGS.includes(t.slug.toLowerCase().trim())
     );
   }
 
@@ -95,10 +87,10 @@ export class ApiClient {
     const cats = Array.isArray(product?.categories) ? product.categories : [];
     return cats.some((c: any) => {
       const bySlug =
-        typeof c?.slug === 'string' &&
+        typeof c?.slug === "string" &&
         COURSE_CATEGORY_SLUGS.includes(c.slug.toLowerCase().trim());
       const byName =
-        typeof c?.name === 'string' &&
+        typeof c?.name === "string" &&
         COURSE_CATEGORY_SLUGS.includes(c.name.toLowerCase().trim());
       return bySlug || byName;
     });
@@ -108,10 +100,25 @@ export class ApiClient {
     return this.hasCourseTag(product) || this.hasCourseCategory(product);
   }
 
+  /**
+   * Hämtar produkter. Som standard filtreras kurser bort.
+   * Sätt includeCourses=true för att även få med kurser.
+   */
   async getProducts(
     page: number = 1,
-    perPage: number = 12
+    perPage: number = 12,
+    includeCourses: boolean | string = false
   ): Promise<{ data: ProductResponse[]; headers: any }> {
+    // ✅ robust konvertering till boolean
+    const includeCoursesBool =
+      typeof includeCourses === "boolean"
+        ? includeCourses
+        : typeof includeCourses === "string"
+        ? ["true", "1", "yes", "on"].includes(includeCourses.toLowerCase().trim())
+        : false;
+
+    console.log("[API] getProducts includeCourses=", includeCourses, "→", includeCoursesBool);
+
     const start = Date.now();
 
     const response = await axios.get(`${this.config.apiUrl}products`, {
@@ -120,7 +127,7 @@ export class ApiClient {
         page,
         per_page: perPage,
         _fields:
-          'id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices',
+          "id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices,stock_status,stock_quantity",
       },
     });
 
@@ -128,16 +135,28 @@ export class ApiClient {
     console.log(`WooCommerce API (products page ${page}) ${duration}ms`);
 
     const normalized = (response.data as any[]).map((p) => this.normalizeProduct(p));
-    const filtered = normalized.filter((p) => !this.isCourseProduct(p));
 
-    console.log(
-      `[SHOP] fetched=${normalized.length} filteredOutCourses=${normalized.length - filtered.length}`
-    );
+    const filtered = includeCoursesBool
+      ? normalized
+      : normalized.filter((p) => !this.isCourseProduct(p));
 
-    return {
-      data: filtered as unknown as ProductResponse[],
-      headers: response.headers,
-    };
+    if (includeCoursesBool) {
+      console.log(`[SHOP] fetched=${normalized.length} (kurser inkluderade ✅)`);
+    } else {
+      console.log(
+        `[SHOP] fetched=${normalized.length} filteredOutCourses=${
+          normalized.length - filtered.length
+        }`
+      );
+    }
+    console.log("[DEBUG] getProducts() response:", response.data.map((p: any) => ({
+  id: p.id,
+  name: p.name,
+  tags: (p.tags || []).map((t: any) => t.slug)
+})));
+
+
+    return { data: filtered as ProductResponse[], headers: response.headers };
   }
 
   async getCourses(
@@ -150,7 +169,7 @@ export class ApiClient {
         page,
         per_page: perPage,
         _fields:
-          'id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices',
+          "id,name,description,short_description,images,categories,tags,variations,attributes,price,regular_price,sale_price,prices,stock_status,stock_quantity",
       },
     });
 
@@ -159,36 +178,21 @@ export class ApiClient {
 
     console.log(`[COURSES] fetched=${normalized.length} keptCourses=${onlyCourses.length}`);
 
-    return {
-      data: onlyCourses as unknown as ProductResponse[],
-      headers: response.headers,
-    };
+    return { data: onlyCourses as ProductResponse[], headers: response.headers };
   }
 
   async getProductById(id: number): Promise<{ data: ProductResponse }> {
-    const response = await axios.get(
-      `${this.config.apiUrl}products/${id}`,
-      this.getAuthConfig()
-    );
-    return {
-      data: this.normalizeProduct(response.data) as ProductResponse,
-    };
+    const response = await axios.get(`${this.config.apiUrl}products/${id}`, this.getAuthConfig());
+    return { data: this.normalizeProduct(response.data) as ProductResponse };
   }
 
   async getProductCategories(): Promise<{ data: CategoryResponse[] }> {
-    return axios.get(
-      `${this.config.apiUrl}products/categories`,
-      this.getAuthConfig()
-    );
+    return axios.get(`${this.config.apiUrl}products/categories`, this.getAuthConfig());
   }
 
   async createOrder(
     orderData: WooCommerceOrderRequest
   ): Promise<{ data: WooCommerceOrderResponse }> {
-    return axios.post(
-      `${this.config.apiUrl}orders`,
-      orderData,
-      this.getAuthConfig()
-    );
+    return axios.post(`${this.config.apiUrl}orders`, orderData, this.getAuthConfig());
   }
 }

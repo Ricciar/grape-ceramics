@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import DOMPurify from 'dompurify';
-import { Product } from '../shopgrid/types';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import DOMPurify from "dompurify";
+import { Product } from "../shopgrid/types";
+import { Link } from "react-router-dom";
+import Container from "../../components/Container";
 
-// 🔹 Hjälpfunktion för att formatera namn
 const capitalizeFirstLetter = (str: string): string => {
-  if (!str) return '';
+  if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-// 🔹 Hjälpfunktion för pris utan decimaler
 const formatPrice = (price: string | null): string => {
   if (!price) return "0";
   const num = Number(price);
   if (isNaN(num)) return price;
-  return Math.round(num).toString(); // inga decimaler
+  return Math.round(num).toString();
 };
 
 const CourseProductCard = ({
@@ -36,17 +35,17 @@ const CourseProductCard = ({
     <div className="flex flex-col w-full">
       <div
         className={`relative w-full h-[390px] md:h-[321px] overflow-hidden ${
-          isSoldOut ? 'opacity-70' : ''
+          isSoldOut ? "opacity-70" : ""
         }`}
         style={{
           backgroundImage:
             product.images.length > 0
               ? `url(${(product.images[0] as any).src})`
-              : 'none',
+              : "none",
           backgroundColor:
-            product.images.length > 0 ? 'transparent' : '#f0f0f0',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+            product.images.length > 0 ? "transparent" : "#f0f0f0",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
         aria-label={getAltText(product)}
       >
@@ -72,21 +71,20 @@ const CourseProductCard = ({
             className={`absolute inset-0 flex items-center justify-center p-4 bg-black bg-opacity-20 
             ${
               !isSoldOut
-                ? 'transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0'
-                : ''
+                ? "transition-opacity duration-300 group-hover:bg-opacity-0 group-focus:bg-opacity-0"
+                : ""
             }`}
           >
             <div className="text-white font-light font-sans tracking-custom-wide-xs text-center">
               <h3 className="text-[22px] md:text-[31px] tracking-widest mb-2">
                 {capitalizeFirstLetter(product.name)}
               </h3>
-              {(product as any).short_description && (
+
+              {product.short_description && (
                 <div
-                  className="text-sm"
+                  className="text-sm font-[300] font-['Rubik']"
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(
-                      (product as any).short_description
-                    ),
+                    __html: DOMPurify.sanitize(product.short_description),
                   }}
                 />
               )}
@@ -102,7 +100,7 @@ const CourseProductCard = ({
         {product.price && (
           <p
             className={`font-sans font-light text-xs tracking-custom-wide-xs ${
-              isSoldOut ? 'line-through text-gray-500' : ''
+              isSoldOut ? "line-through text-gray-500" : ""
             }`}
           >
             {formatPrice(product.price)} SEK
@@ -113,7 +111,7 @@ const CourseProductCard = ({
   );
 };
 
-const CourseProducts: React.FC = () => {
+const CoursesPage: React.FC = () => {
   const [courseProducts, setCourseProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,15 +121,15 @@ const CourseProducts: React.FC = () => {
       try {
         setLoading(true);
 
-        const response = await axios.get('/api/courses', {
+        const response = await axios.get("/api/courses", {
           params: { per_page: 100 },
         });
 
         const onlyCourses: Product[] = response.data.products || [];
         setCourseProducts(onlyCourses);
       } catch (err) {
-        console.error('Fel vid hämtning av kurser:', err);
-        setError('Det gick inte att hämta kurserna.');
+        console.error("Fel vid hämtning av kurser:", err);
+        setError("Det gick inte att hämta kurserna.");
       } finally {
         setLoading(false);
       }
@@ -153,15 +151,16 @@ const CourseProducts: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-full px-[2px] overflow-hidden">
-      {/* Mobil vy */}
-      <div className="grid grid-cols-1 gap-[2px] p-[2px] md:hidden">
+    // 🟢 Samma yttre container som butiken
+    <Container className="p-[1px]">
+      {/* Mobil layout */}
+      <div className="grid grid-cols-1 gap-[2px] md:hidden">
         {courseProducts.length > 0 ? (
           courseProducts.map((product) => (
             <CourseProductCard
               key={`product-mobile-${product.id}`}
               product={product}
-              isSoldOut={product.stock_status === 'outofstock'}
+              isSoldOut={product.stock_status === "outofstock"}
             />
           ))
         ) : (
@@ -169,22 +168,21 @@ const CourseProducts: React.FC = () => {
         )}
       </div>
 
-      {/* Desktop vy */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-[2px] p-[2px]">
+      {/* Desktop – grid */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-[2px]">
         {courseProducts.length > 0 ? (
           courseProducts.map((product) => (
             <CourseProductCard
               key={`product-desktop-${product.id}`}
               product={product}
-              isSoldOut={product.stock_status === 'outofstock'}
+              isSoldOut={product.stock_status === "outofstock"}
             />
           ))
         ) : (
           <p className="text-center col-span-3">Inga kurser tillgängliga.</p>
         )}
       </div>
-    </div>
-  );
-};
+    </Container>
+)};
 
-export default CourseProducts;
+export default CoursesPage;

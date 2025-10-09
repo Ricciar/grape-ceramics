@@ -1,0 +1,23 @@
+/* --- Typografi för beskrivningstext på produkt/kurs --- */
+.desc-text {
+  font-family: "Rubik", sans-serif;
+  font-weight: 300 !important;        /* tvinga 300 */
+  color: #1C1B1F;
+}
+.desc-text p,
+.desc-text li,
+.desc-text span {
+  font-weight: 300 !important;        /* om WP lägger in egna taggar */
+  font-family: inherit;
+}
+/* Normalisera mellanrummet under "Tillbaka …" överallt */
+.gc-back + .gc-first {
+  margin-top: 24px !important; /* exakt 24px (≈ Tailwind gap-6) */
+}
+
+/* Om du vill ha en annan siffra – ändra här ENDAST */
+@media (min-width: 1024px) {
+  .gc-back + .gc-first {
+    margin-top: 24px !important;
+  }
+}

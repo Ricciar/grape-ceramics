@@ -1,13 +1,16 @@
-const isProduction = import.meta.env.PROD;
+// client/src/config/api.ts
 
-// Bas-URL för API-anrop
-export const API_BASE_URL = isProduction
-  ? '/.netlify/functions/api' // Netlify Functions i produktion
-  : '/api'; // Proxy i utvecklingsmiljö
+const API_BASE_URL = import.meta.env.PROD
+  ? "https://grapeceramics.netlify.app"
+  : "http://localhost:8888";
 
-// Funktion för att bygga fullständiga API-URL:er
+export default API_BASE_URL;
+
+
+/**
+ * Bygger fullständig URL till API:t.
+ */
 export const apiUrl = (endpoint: string) => {
-  // Ta bort eventuellt inledande /api från endpoint
-  const cleanEndpoint = endpoint.replace(/^\/api\//, '');
+  const cleanEndpoint = endpoint.replace(/^\/api\//, "");
   return `${API_BASE_URL}/${cleanEndpoint}`;
 };
