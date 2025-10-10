@@ -139,7 +139,7 @@ const MainPage: React.FC = () => {
 
   return (
     <div className="p-[1px] max-w-6xl mx-auto">
-      {/* Video överst – behåll som tidigare */}
+      {/* Video */}
       {videoSrc && (
         <video
           src={videoSrc}
@@ -151,40 +151,38 @@ const MainPage: React.FC = () => {
         />
       )}
 
-      {/* FÖRSTA RADEN */}
-      {/* Mobil: 2 kolumner, visa 2 kort */}
+      {/* 1:a raden – mobil */}
       <div className="grid grid-cols-2 gap-[2px] px-[2px] mt-[2px] md:hidden">
         {featured.slice(0, 2).map((p, i) => (
           <FeaturedProductCard key={`m-top-${i}`} product={p} />
         ))}
       </div>
 
-      {/* Desktop: 3 kolumner, visa 3 kort */}
+      {/* 1:a raden – desktop */}
       <div className="hidden md:grid md:grid-cols-3 md:gap-[2px] px-[2px] md:mt-[2px]">
         {featured.slice(0, 3).map((p, i) => (
           <FeaturedProductCard key={`d-top-${i}`} product={p} />
         ))}
       </div>
 
-      {/* INFO-SEKTION – fullbredd (hela skärmen), flexibel höjd */}
+      {/* INFO-SEKTION – exakt bredd som grid, brödtextstil (Rubik 300) */}
       {infoSection?.content?.rendered && (
-        <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen my-[2px]">
+        <section className="my-[2px] px-[2px]">
           <div
-            className="w-full text-center px-6 py-12 bg-[#DFCABB] text-[#1C1B1F] font-light tracking-[2.28px]"
+            className="bg-[#DFCABB] text-[#1C1B1F] py-12 text-center font-[300] font-['Rubik'] tracking-normal leading-relaxed"
             dangerouslySetInnerHTML={{ __html: sanitizeWP(infoSection.content.rendered) }}
           />
         </section>
       )}
 
-      {/* ANDRA RADEN */}
-      {/* Mobil: resterande (från index 2) i 2 kolumner */}
+      {/* 2:a raden – mobil */}
       <div className="grid grid-cols-2 gap-[2px] px-[2px] mb-[2px] md:hidden">
         {featured.slice(2, 6).map((p, i) => (
           <FeaturedProductCard key={`m-bot-${i}`} product={p} />
         ))}
       </div>
 
-      {/* Desktop: resterande (från index 3) i 3 kolumner */}
+      {/* 2:a raden – desktop */}
       <div className="hidden md:grid md:grid-cols-3 md:gap-[2px] px-[2px] md:mb-[2px]">
         {featured.slice(3, 6).map((p, i) => (
           <FeaturedProductCard key={`d-bot-${i}`} product={p} />

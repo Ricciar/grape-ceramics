@@ -1,10 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
 
+/* Låt typsnitt/weight ärvas per element (inte på *) */
 * {
-   font-family: "Rubik", sans-serif;
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Bas: brödtext = Rubik 300 */
+body {
+  font-family: "Rubik", sans-serif;
+  font-weight: 300; /* Light */
 }
 
 @tailwind base;
@@ -13,11 +19,8 @@
 
 /* Put this at the bottom of index.css */
 :root {
-  /* tweak this to fine-tune alignment with “B” and the cart */
   --page-x: clamp(20px, 4vw, 50px);
 }
-
-/* Utility class for consistent horizontal padding */
 .page-x {
   padding-left: var(--page-x);
   padding-right: var(--page-x);

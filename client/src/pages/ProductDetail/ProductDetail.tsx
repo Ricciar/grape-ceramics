@@ -111,7 +111,7 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
 
   return (
     <div className="p-[1px] max-w-6xl mx-auto px-[2px] mb-10">
-      {/* Back-länk: kontrollerad spacing */}
+      {/* Back-länk – behåll nuvarande stil */}
       <div className="pt-6 pb-2 md:pt-8 md:pb-2 z-10 relative">
         <Link
           to={isCourse ? "/kurser" : "/butik"}
@@ -121,7 +121,6 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </Link>
       </div>
 
-      {/* Huvudlayout – samma sidmarginallogik som övriga sidor */}
       <div className="mt-0 flex flex-col items-center lg:flex-row lg:items-start lg:justify-between lg:gap-16 mb-10">
         {/* ---------- BILDER ---------- */}
         <div className="w-full lg:max-w-[600px] flex flex-col mt-0">
@@ -158,7 +157,6 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                 )}
               </div>
 
-              {/* Miniatyrer – med luft nedåt så footern inte klistrar sig */}
               {product.images.length > 1 && (
                 <div className="flex mt-4 space-x-2 overflow-x-auto mb-10">
                   {product.images.map((img, idx) => (
@@ -185,12 +183,14 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </div>
 
         {/* ---------- INFO ---------- */}
-        <div className="flex flex-col items-center w-full lg:max-w-[600px] lg:items-start font-light tracking-[2.85px]">
+        <div className="flex flex-col items-center w-full lg:max-w-[600px] lg:items-start font-light">
+          {/* Rubrik – behåll samma look som idag */}
           <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
             {product.name}
           </h1>
 
-          <p className="desc-text text-[16px] mt-[5px] whitespace-pre-line">
+          {/* Brödtext – Rubik 300 */}
+          <p className="text-[16px] mt-[5px] whitespace-pre-line font-[300] font-['Rubik'] tracking-normal leading-relaxed">
             {product.description || "Ingen beskrivning tillgänglig."}
           </p>
 

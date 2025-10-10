@@ -34,13 +34,12 @@ const Navbar: React.FC = () => {
         ref={navbarRef}
         role="navigation"
         aria-label="Huvudnavigation"
-        // Ingen sidpadding här – låt containern innanför styra bredd/marginal
         className="fixed top-0 left-0 right-0 w-full bg-[#F8F4EC] px-0 py-3 z-40 shadow-sm md:py-6"
       >
         {/* Samma container som sidorna */}
         <div className="mx-auto w-full max-w-6xl px-[2px] flex items-center justify-between font-sans">
           {/* Vänster del */}
-          <div className="flex-1">
+          <div className="flex-1 md:pl-0 pl-3">
             <div className="md:hidden">
               <NavMenu />
             </div>
@@ -74,14 +73,15 @@ const Navbar: React.FC = () => {
                   <div className="mb-2">
                     <img src={logotype} alt="Grape Ceramics Logo" className="h-10 w-auto" />
                   </div>
-                  <div className="text-xl tracking-widest">GRAPECERAMICS</div>
+                  {/* Med mellanslag */}
+                  <div className="text-xl tracking-widest">GRAPE CERAMICS</div>
                 </div>
               )}
             </Link>
           </div>
 
           {/* Kundvagn till höger */}
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end md:pr-0 pr-3">
             <button onClick={() => setIsCartOpen(true)} className="p-2" aria-label="Öppna kundvagn">
               <CartIcon />
             </button>

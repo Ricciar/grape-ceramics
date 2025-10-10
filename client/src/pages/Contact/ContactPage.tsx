@@ -22,21 +22,14 @@ const ContactPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const response = await axios.get(`/api/pages?slug=kontakt`);
-
-        if (
-          response.data &&
-          Array.isArray(response.data) &&
-          response.data.length > 0
-        ) {
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           setPageData(response.data[0]);
         } else if (response.data && response.data.kontakt) {
           setPageData(response.data.kontakt);
         } else {
           throw new Error('Unexpected response format');
         }
-
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -58,7 +51,6 @@ const ContactPage: React.FC = () => {
     e.preventDefault();
     console.log('Formulär skickat:', formData);
     setSubmitted(true);
-    // TODO: koppla till backend/mailservice
   };
 
   if (loading) return <SkeletonContactPage />;
@@ -82,15 +74,15 @@ const ContactPage: React.FC = () => {
   return (
     <div className="w-full flex justify-center font-sans font-light">
       <div className="w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
-        {/* Rubrik */}
-        <h1 className="text-2xl sm:text-3xl font-light text-center mb-6 sm:mb-8">
+        {/* Rubrik – samma stil som på produkt/kurs-detail */}
+        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] text-center mb-6 sm:mb-8">
           {pageData.title?.rendered || 'Kontakt'}
         </h1>
 
-        {/* Om-mig text */}
+        {/* Om-mig text – brödtext (Rubik 300) */}
         {pageData.content?.rendered && (
           <div
-            className="prose prose-sm sm:prose-base max-w-none mb-8 sm:mb-12 text-center sm:text-left"
+            className="prose prose-sm sm:prose-base max-w-none mb-8 sm:mb-12 text-center sm:text-left font-[300] font-['Rubik'] leading-relaxed"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(pageData.content.rendered),
             }}
@@ -99,7 +91,6 @@ const ContactPage: React.FC = () => {
 
         {/* Formulär */}
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-          {/* Namn & E-post */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="name">
@@ -132,7 +123,6 @@ const ContactPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Telefon */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="phone">
               Telefonnummer
@@ -147,7 +137,6 @@ const ContactPage: React.FC = () => {
             />
           </div>
 
-          {/* Meddelande */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="message">
               Meddelande
@@ -163,7 +152,6 @@ const ContactPage: React.FC = () => {
             />
           </div>
 
-          {/* Knapp */}
           <div className="flex justify-center sm:justify-start">
             <button
               type="submit"
