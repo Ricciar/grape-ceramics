@@ -14,6 +14,26 @@ interface ExtendedProductDetailProps extends ProductDetailProps {
 
 const SWIPE_THRESHOLD = 50;
 
+/** Tunn, baseline-alignad externlänk-ikon (↗︎) */
+const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.1}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <rect x="3.75" y="8.25" width="12" height="12" rx="2" />
+    <path d="M12 12 L20 4" />
+    <path d="M20 4 L20 10" />
+    <path d="M20 4 L14 4" />
+  </svg>
+);
+
 const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }) => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -27,6 +47,16 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
   const isMounted = useRef(true);
   const { addToCart } = useCart();
   const [isCourse, setIsCourse] = useState(false);
+
+  /* 🔝 Scrolla alltid till toppen när vi går IN på en produkt/kurs */
+  useEffect(() => {
+    // Körs direkt när id (routen) ändras
+    // setTimeout 0 för att låta React byta vy först
+    const t = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [id]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -109,9 +139,44 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
     touchStartX.current = null;
   };
 
+  // ------- Lager-rad (kurs vs produkt) -------
+  const renderStockRow = () => {
+    if (isCourse) {
+      if (product.stock_status === "outofstock") {
+        return (
+          <div className="flex items-center">
+            <span>Slutsåld</span>
+            <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full" />
+          </div>
+        );
+      }
+      return <div />; // inget meddelande när kurs finns
+    }
+
+    if (product.stock_status === "instock") {
+      const qty =
+        product.stock_quantity !== null && product.stock_quantity !== undefined
+          ? `${product.stock_quantity} st i lager`
+          : "I lager";
+      return (
+        <div className="flex items-center">
+          <span>{qty}</span>
+          <span className="ml-2 w-3 h-3 bg-[#3CB371] rounded-full" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center">
+        <span>Slut i lager</span>
+        <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full" />
+      </div>
+    );
+  };
+
   return (
     <div className="p-[1px] max-w-6xl mx-auto px-[2px] mb-10">
-      {/* Back-länk – behåll nuvarande stil */}
+      {/* Back-länk */}
       <div className="pt-6 pb-2 md:pt-8 md:pb-2 z-10 relative">
         <Link
           to={isCourse ? "/kurser" : "/butik"}
@@ -121,6 +186,7 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </Link>
       </div>
 
+      {/* Huvudlayout */}
       <div className="mt-0 flex flex-col items-center lg:flex-row lg:items-start lg:justify-between lg:gap-16 mb-10">
         {/* ---------- BILDER ---------- */}
         <div className="w-full lg:max-w-[600px] flex flex-col mt-0">
@@ -138,23 +204,24 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                 />
 
                 {multipleImages && (
-                  <>
-                    <button
-                      onClick={prevImage}
-                      className="hidden lg:flex absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white px-3 py-2"
-                      aria-label="Föregående bild"
-                    >
-                      ←
-                    </button>
-                    <button
-                      onClick={nextImage}
-                      className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white px-3 py-2"
-                      aria-label="Nästa bild"
-                    >
-                      →
-                    </button>
-                  </>
-                )}
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
+                    aria-label="Föregående bild"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
+                    aria-label="Nästa bild"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+
               </div>
 
               {product.images.length > 1 && (
@@ -183,34 +250,18 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         </div>
 
         {/* ---------- INFO ---------- */}
-        <div className="flex flex-col items-center w-full lg:max-w-[600px] lg:items-start font-light">
-          {/* Rubrik – behåll samma look som idag */}
+        <div className="flex flex-col items-center w-full lg:max-w-[600px] lg:items-start font-light tracking-[2.85px]">
           <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mt-5">
             {product.name}
           </h1>
 
-          {/* Brödtext – Rubik 300 */}
-          <p className="text-[16px] mt-[5px] whitespace-pre-line font-[300] font-['Rubik'] tracking-normal leading-relaxed">
+          {/* brödtext – Rubik Light 300 via .desc-text (App.css) */}
+          <div className="desc-text text-[16px] mt-[5px] whitespace-pre-line">
             {product.description || "Ingen beskrivning tillgänglig."}
-          </p>
+          </div>
 
           <div className="w-full h-[65px] flex justify-between mt-4 mb-2">
-            <div className="flex items-center">
-              {product.stock_status === "instock" ? (
-                <span>
-                  I lager{" "}
-                  {product.stock_quantity !== null
-                    ? `${product.stock_quantity}`
-                    : ""}{" "}
-                  st
-                </span>
-              ) : (
-                <div className="flex self-end items-center justify-center">
-                  <span>Slut i lager</span>
-                  <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full"></span>
-                </div>
-              )}
-            </div>
+            <div className="flex items-center">{renderStockRow()}</div>
 
             <div className="text-right">
               {product.sale_price ? (
@@ -227,39 +278,71 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
             </div>
           </div>
 
-          <Button
-            text={
-              product.stock_status === "instock"
-                ? addedToCart
-                  ? "TILLAGD I VARUKORG"
-                  : "LÄGG I VARUKORG"
-                : "ORDERFÖRFRÅGAN"
-            }
-            className="w-[292px] h-[55px] mb-5"
-            onClick={() => {
-              if (product.stock_status === "instock") {
-                const primaryImage =
-                  product.images.length > 0 ? product.images[0].src : "";
-                addToCart(
-                  {
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    imageUrl: primaryImage,
-                    quantity: 1,
-                    description: product.description,
-                  },
-                  1
-                );
-                setAddedToCart(true);
-                setTimeout(() => {
-                  if (isMounted.current) setAddedToCart(false);
-                }, 2000);
-              } else {
-                setIsOrderRequestModalOpen(true);
+          {/* Primär knapp */}
+          {isCourse ? (
+            product.stock_status === "outofstock" ? (
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="w-[292px] h-[55px] mb-5 border border-black text-black tracking-[0.2em] font-light cursor-not-allowed opacity-50"
+              >
+                FULLBOKAD
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  window.open(
+                    "https://soulfirekeramik.studio/butik/",
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
+                }
+                className="w-[292px] h-[55px] mb-5 border border-black text-black tracking-[0.2em] font-light hover:bg-black hover:text-white transition-colors inline-flex items-center justify-center gap-2"
+                aria-label="Boka här (öppnas i ny flik)"
+              >
+                <span className="align-middle">BOKA HÄR</span>
+                <ExternalLinkIcon
+                  className="w-[16px] h-[16px] align-middle relative top-[-3px]"
+                />
+              </button>
+            )
+          ) : (
+            <Button
+              text={
+                product.stock_status === "instock"
+                  ? addedToCart
+                    ? "TILLAGD I VARUKORG"
+                    : "LÄGG I VARUKORG"
+                  : "ORDERFÖRFRÅGAN"
               }
-            }}
-          />
+              className="w-[292px] h-[55px] mb-5"
+              onClick={() => {
+                if (product.stock_status === "instock") {
+                  const primaryImage =
+                    product.images.length > 0 ? product.images[0].src : "";
+                  addToCart(
+                    {
+                      id: product.id,
+                      name: product.name,
+                      price: product.price,
+                      imageUrl: primaryImage,
+                      quantity: 1,
+                      description: product.description,
+                    },
+                    1
+                  );
+                  setAddedToCart(true);
+                  setTimeout(() => {
+                    if (isMounted.current) setAddedToCart(false);
+                  }, 2000);
+                } else {
+                  setIsOrderRequestModalOpen(true);
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 

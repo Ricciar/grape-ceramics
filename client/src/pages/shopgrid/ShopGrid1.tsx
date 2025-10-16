@@ -9,6 +9,8 @@ import SkeletonProductCard from './SkeletonProductCard';
 import SkeletonDesktopProductCard from './SkeletonDesktopProductCard';
 import filtericon from '../../assets/filtericon.svg';
 
+const SCROLL_KEY = 'scroll:shop';
+
 const ShopGrid1: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,12 +42,20 @@ const ShopGrid1: React.FC = () => {
 
         setProducts(allProducts);
         setFilteredProducts(allProducts);
-
-        console.log('Totalt laddade produkter i butik:', allProducts.length);
       } catch (error) {
         console.error('Fel vid hämtning av produkter: ', error);
       } finally {
         setLoading(false);
+
+        // Återställ scroll om vi har en sparad position
+        const saved = sessionStorage.getItem(SCROLL_KEY);
+        if (saved) {
+          const y = Number(saved);
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: y, left: 0, behavior: 'instant' as ScrollBehavior });
+          });
+          sessionStorage.removeItem(SCROLL_KEY);
+        }
       }
     };
 
@@ -53,6 +63,8 @@ const ShopGrid1: React.FC = () => {
   }, []);
 
   const navigateToProduct = (productId: number) => {
+    // Spara nuvarande scroll
+    sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
     navigate(`/product/${productId}`);
   };
 

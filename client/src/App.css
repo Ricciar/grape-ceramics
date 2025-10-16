@@ -3,13 +3,32 @@
   font-family: "Rubik", sans-serif;
   font-weight: 300 !important;        /* tvinga 300 */
   color: #1C1B1F;
+  line-height: 1.6;
+  letter-spacing: .02em;
 }
+
+/* Viktigt: KOMMA efter span! (detta saknades och bröt regeln) */
 .desc-text p,
 .desc-text li,
-.desc-text span {
-  font-weight: 300 !important;        /* om WP lägger in egna taggar */
+.desc-text span,
+.desc-text a,
+.desc-text em,
+.desc-text blockquote {
+  font-weight: 300 !important;        /* om WP/HTML lägger in egna taggar */
   font-family: inherit;
+  color: #1C1B1F;
 }
+
+/* Stark text får vara normal (inte bold 700) */
+.desc-text strong {
+  font-weight: 400 !important;
+}
+
+/* Snyggare listor vid kurs/produktbeskrivningar */
+.desc-text ul { list-style: disc; margin-left: 1.25rem; }
+.desc-text ol { list-style: decimal; margin-left: 1.25rem; }
+.desc-text li { margin: 0.25rem 0; }
+
 /* Normalisera mellanrummet under "Tillbaka …" överallt */
 .gc-back + .gc-first {
   margin-top: 24px !important; /* exakt 24px (≈ Tailwind gap-6) */
@@ -21,8 +40,8 @@
     margin-top: 24px !important;
   }
 }
+
 /* lägg i client/src/App.css eller motsvarande globala css */
 .detail-top {
   margin-top: 12px !important; /* exakt samma under 'Tillbaka...' överallt */
 }
-

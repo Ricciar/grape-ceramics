@@ -4,6 +4,8 @@ import DOMPurify from "dompurify";
 import { Product } from "../shopgrid/types";
 import { Link } from "react-router-dom";
 
+const SCROLL_KEY = "scroll:courses";
+
 const capitalizeFirstLetter = (str: string): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -27,9 +29,12 @@ const CourseProductCard = ({
   const imageUrl = mainImage?.src || "";
   const alt = mainImage?.alt || product.name || "Kurs";
 
+  const handleClick = () => {
+    sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+  };
+
   return (
     <div className="flex flex-col w-full">
-      {/* PORTRAIT 4:5 – samma som startsidan. Lägg 'group' här så hover funkar även över overlayn */}
       <div className={`group relative w-full aspect-[4/5] overflow-hidden ${isSoldOut ? "opacity-70" : ""}`}>
         {imageUrl ? (
           <img
@@ -45,18 +50,17 @@ const CourseProductCard = ({
           </div>
         )}
 
-        {/* Slutsåld-badge */}
         {isSoldOut && (
           <div className="absolute bottom-3 left-3 bg-custom-gray text-white px-2 py-1 text-sm font-light z-20 tracking-[0.06em]">
             Slutsåld
           </div>
         )}
 
-        {/* Overlay med kursnamn & korttext – hela kortet klickbart */}
         <Link
           to={`/kurs/${product.id}`}
           className="block absolute inset-0 focus:outline-none"
           aria-label={`Visa kurs: ${product.name}`}
+          onClick={handleClick}
         >
           <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/30">
             <div className="text-white font-light font-sans tracking-[0.04em] text-center">
@@ -76,7 +80,6 @@ const CourseProductCard = ({
         </Link>
       </div>
 
-      {/* Meta-rad under bilden (behålls på kurssidan) */}
       <div className="mt-2 ml-3 mb-2 flex flex-row justify-between md:mt-4 md:mb-4 mr-3">
         <h3 className="text-xs font-sans font-light tracking-[0.04em]">
           {capitalizeFirstLetter(product.name)}
@@ -112,6 +115,16 @@ const CoursesPage: React.FC = () => {
         setError("Det gick inte att hämta kurserna.");
       } finally {
         setLoading(false);
+
+        // Återställ scroll
+        const saved = sessionStorage.getItem(SCROLL_KEY);
+        if (saved) {
+          const y = Number(saved);
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: y, left: 0, behavior: 'instant' as ScrollBehavior });
+          });
+          sessionStorage.removeItem(SCROLL_KEY);
+        }
       }
     };
 

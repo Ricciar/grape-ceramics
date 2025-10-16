@@ -50,7 +50,6 @@ const NavMenu: React.FC = () => {
               isOpen ? 'rotate-45 translate-y-0' : 'translate-y-[-4px]'
             }`}
           />
-
           {/* Andra linjen */}
           <span
             className={`block absolute h-0.5 w-6 bg-black rounded-sm transition-all duration-300 ease-in-out ${
@@ -69,33 +68,17 @@ const NavMenu: React.FC = () => {
             transform: isVisible ? 'translateY(0)' : 'translateY(-10px)',
           }}
         >
-          <Link
-            to="/butik"
-            className="py-4 text-stone-800 hover:text-stone-600"
-            onClick={closeMenu}
-          >
+          <Link to="/butik" className="py-4 text-stone-800 hover:text-stone-600" onClick={closeMenu}>
             BUTIK
           </Link>
-          <Link
-            to="/kurser"
-            className="py-4 text-stone-800 hover:text-stone-600"
-            onClick={closeMenu}
-          >
+          <Link to="/kurser" className="py-4 text-stone-800 hover:text-stone-600" onClick={closeMenu}>
             KURSER
           </Link>
-          <Link
-            to="/kontakt"
-            className="py-4 text-stone-800 hover:text-stone-600"
-            onClick={closeMenu}
-          >
-            KONTAKT
+          <Link to="/bestallning" className="py-4 text-stone-800 hover:text-stone-600" onClick={closeMenu}>
+            BESTÄLLNING
           </Link>
-          <Link
-            to="/faq"
-            className="py-4 text-stone-800 hover:text-stone-600"
-            onClick={closeMenu}
-          >
-            FAQ
+          <Link to="/kontakt" className="py-4 text-stone-800 hover:text-stone-600" onClick={closeMenu}>
+            OM MIG
           </Link>
         </div>
       )}

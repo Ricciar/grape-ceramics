@@ -20,6 +20,9 @@ body {
 /* Put this at the bottom of index.css */
 :root {
   --page-x: clamp(20px, 4vw, 50px);
+
+    /* lägg till/justera detta för att få exakt samma avstånd */
+  --center-gap: 160px; /* prova 80–110px tills BUTIK↔LOGO == LOGO↔KORG */
 }
 .page-x {
   padding-left: var(--page-x);

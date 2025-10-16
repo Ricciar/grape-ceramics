@@ -3,18 +3,26 @@ import { ProductCardProps } from './types';
 
 const SWIPE_THRESHOLD = 50; // px
 
-const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  index,
-  onClick,
-}) => {
+// Chevron som matchar bilden du skickade
+const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d={dir === 'left' ? 'M15 4 L9 12 L15 20' : 'M9 4 L15 12 L9 20'}
+      stroke="white"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
   const images = product.images || [];
   const mainImage = images[currentImageIndex]?.src;
-  const hoverImage = images[1]?.src;
 
   const formatPrice = (price: string | null): string => {
     if (!price) return '0';
@@ -23,39 +31,45 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return Math.round(num).toString();
   };
 
-  // 📱 Swipe-start
+  // Swipe (mobil)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
 
-  // 📱 Swipe-end
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!images.length || touchStartX.current === null) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     if (deltaX > SWIPE_THRESHOLD) {
-      // swipe höger → föregående bild
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? images.length - 1 : prev - 1
-      );
+      setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     } else if (deltaX < -SWIPE_THRESHOLD) {
-      // swipe vänster → nästa bild
-      setCurrentImageIndex((prev) =>
-        prev === images.length - 1 ? 0 : prev + 1
-      );
+      setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     }
     touchStartX.current = null;
+  };
+
+  // Desktop-pilar
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!images.length) return;
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!images.length) return;
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const mobileLayout = index % 5 === 4 ? 'col-span-2' : 'col-span-1';
 
   return (
     <div
-      className={`cursor-pointer ${mobileLayout}`}
+      className={`cursor-pointer ${mobileLayout} group`}
       onClick={() => onClick(product.id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Produktbild */}
+      {/* Bild */}
       <div
         className="w-full aspect-[4/5] bg-gray-100 overflow-hidden relative"
         onTouchStart={handleTouchStart}
@@ -63,20 +77,38 @@ const ProductCard: React.FC<ProductCardProps> = ({
       >
         <img
           src={mainImage}
-          alt={product.images[0]?.alt || product.name}
+          alt={product.images?.[0]?.alt || product.name}
           loading="lazy"
           className="w-full h-full object-cover transition duration-300"
         />
 
-        {/* Pil-overlay – visas bara på desktop vid hover */}
-        {isHovered && hoverImage && (
-          <div className="hidden md:flex absolute inset-0 items-center justify-center bg-black bg-opacity-30">
-            <span className="text-white text-3xl">➜</span>
-          </div>
+        {/* Desktop: chevronpilar visas vid hover, om fler än 1 bild */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className={`hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/40 rounded-full transition ${
+                isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
+              aria-label="Föregående bild"
+            >
+              <Chevron dir="left" />
+            </button>
+
+            <button
+              onClick={nextImage}
+              className={`hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/40 rounded-full transition ${
+                isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
+              aria-label="Nästa bild"
+            >
+              <Chevron dir="right" />
+            </button>
+          </>
         )}
       </div>
 
-      {/* Produktnamn och pris */}
+      {/* Meta */}
       <div className="mt-2 ml-3 flex flex-col justify-between">
         <span className="text-xs font-light leading-none tracking-[2.28px] text-[#1C1B1F]">
           {product.name}
@@ -88,9 +120,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 {formatPrice(product.regular_price)} SEK
               </span>
               <br />
-              <span className="text-xs ml-2">
-                {formatPrice(product.price)} SEK
-              </span>
+              <span className="text-xs ml-2">{formatPrice(product.price)} SEK</span>
             </>
           ) : (
             <span className="text-xs font-light leading-none tracking-[2.28px] text-[#1C1B1F]">

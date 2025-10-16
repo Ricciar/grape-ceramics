@@ -2,6 +2,19 @@ import React, { useState } from 'react';
 import { DesktopProductCardProps } from './types';
 import { capitalizeFirstLetter } from './ProductLayoutUtils';
 
+// Chevron som matchar bilden du skickade
+const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d={dir === 'left' ? 'M15 4 L9 12 L15 20' : 'M9 4 L15 12 L9 20'}
+      stroke="white"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -10,33 +23,25 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
   }
 
   const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation(); // förhindra att onClick triggas
+    e.stopPropagation();
     setCurrentIndex((prev) => (prev + 1) % product.images.length);
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1
-    );
+    setCurrentIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
   };
 
-  
-  // 🔥 Pris-funktion för säker formatering (utan decimaler)
   const formatPrice = (price: string | null): string => {
-    if (!price) return "0";
+    if (!price) return '0';
     const num = Number(price);
-    if (isNaN(num)) return price; // redan text
-    return Math.round(num).toString(); // heltal utan decimaler
+    if (isNaN(num)) return price;
+    return Math.round(num).toString();
   };
-
 
   return (
-    <div
-      className="cursor-pointer group relative"
-      onClick={() => onClick(product.id)}
-    >
-      {/* Produktbild */}
+    <div className="cursor-pointer group relative" onClick={() => onClick(product.id)}>
+      {/* Bild */}
       <div className="w-full h-[450px] bg-gray-100 overflow-hidden relative">
         <img
           src={product.images[currentIndex].src}
@@ -45,29 +50,29 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
           className="w-full h-full object-cover"
         />
 
-        {/* Visa pilar bara om det finns fler än 1 bild */}
+        {/* Chevronpilar (bara om fler än 1 bild) */}
         {product.images.length > 1 && (
           <>
-            {/* Vänsterpil */}
             <button
               onClick={prevImage}
-              className="absolute top-1/2 left-2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"
+              aria-label="Föregående bild"
             >
-              ◀
+              <Chevron dir="left" />
             </button>
 
-            {/* Högerpil */}
             <button
               onClick={nextImage}
-              className="absolute top-1/2 right-2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+              className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition"
+              aria-label="Nästa bild"
             >
-              ▶
+              <Chevron dir="right" />
             </button>
           </>
         )}
       </div>
 
-      {/* Produktnamn och pris */}
+      {/* Meta */}
       <div className="mt-2 ml-3 flex flex-col justify-between">
         <span className="text-xs font-light leading-none tracking-[2.28px] text-[#1C1B1F]">
           {capitalizeFirstLetter(product.name)}

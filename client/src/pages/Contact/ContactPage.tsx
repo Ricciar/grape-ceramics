@@ -4,6 +4,9 @@ import DOMPurify from 'dompurify';
 import { WPPage } from '../MainPage/types';
 import { SkeletonContactPage } from './SkeletonContactPage';
 
+const WP_CONTACT_ENDPOINT =
+  'https://www.grapeceramics.se/wp-json/grape/v1/contact';
+
 const ContactPage: React.FC = () => {
   const [pageData, setPageData] = useState<WPPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,13 +19,18 @@ const ContactPage: React.FC = () => {
     message: '',
   });
 
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Hämta *Kontakt* sidan från WP (slug: kontakt)
         const response = await axios.get(`/api/pages?slug=kontakt`);
+
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           setPageData(response.data[0]);
         } else if (response.data && response.data.kontakt) {
@@ -30,9 +38,10 @@ const ContactPage: React.FC = () => {
         } else {
           throw new Error('Unexpected response format');
         }
+
         setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Kunde inte hämta kontaktinformationen. Försök igen senare.');
         setLoading(false);
       }
@@ -47,25 +56,59 @@ const ContactPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Formulär skickat:', formData);
-    setSubmitted(true);
+    setSubmitError(null);
+
+    // Grundvalidering
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      setSubmitError('Fyll i namn, e-post och meddelande.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      await axios.post(WP_CONTACT_ENDPOINT, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        source: 'kontakt',
+      });
+
+      setSubmitted(true);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (err: any) {
+      console.error('Kontaktformulär – fel vid skick:', err);
+      const apiMsg =
+        err?.response?.data?.error ||
+        'Kunde inte skicka just nu. Försök igen om en stund.';
+      setSubmitError(apiMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <SkeletonContactPage />;
 
   if (error) {
     return (
-      <div className="error-container font-sans font-light">
-        <p className="error-message">{error}</p>
+      <div className="error-container font-sans font-light px-4 py-8 max-w-3xl mx-auto">
+        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mb-6">
+          OM MIG
+        </h1>
+        <p className="text-[#1C1B1F]">{error}</p>
       </div>
     );
   }
 
   if (!pageData) {
     return (
-      <div className="no-data-container font-sans font-light">
+      <div className="no-data-container font-sans font-light px-4 py-8 max-w-3xl mx-auto">
+        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mb-6">
+          OM MIG
+        </h1>
         <p>Ingen kontaktinformation tillgänglig just nu.</p>
       </div>
     );
@@ -74,15 +117,15 @@ const ContactPage: React.FC = () => {
   return (
     <div className="w-full flex justify-center font-sans font-light">
       <div className="w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
-        {/* Rubrik – samma stil som på produkt/kurs-detail */}
-        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] text-center mb-6 sm:mb-8">
-          {pageData.title?.rendered || 'Kontakt'}
+        {/* Rubrik – samma som produkt/kurs */}
+        <h1 className="font-sans text-[24px] font-light tracking-[4.56px] mb-6">
+          {pageData.title?.rendered || 'OM MIG'}
         </h1>
 
-        {/* Om-mig text – brödtext (Rubik 300) */}
+        {/* Text från WordPress */}
         {pageData.content?.rendered && (
           <div
-            className="prose prose-sm sm:prose-base max-w-none mb-8 sm:mb-12 text-center sm:text-left font-[300] font-['Rubik'] leading-relaxed"
+            className="prose prose-sm sm:prose-base max-w-none mb-8 sm:mb-12"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(pageData.content.rendered),
             }}
@@ -91,10 +134,11 @@ const ContactPage: React.FC = () => {
 
         {/* Formulär */}
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          {/* Namn & E-post (obligatoriska) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="name">
-                Namn
+                Namn *
               </label>
               <input
                 type="text"
@@ -123,6 +167,7 @@ const ContactPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Telefon (valfri) */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="phone">
               Telefonnummer
@@ -137,9 +182,10 @@ const ContactPage: React.FC = () => {
             />
           </div>
 
+          {/* Meddelande (obligatoriskt) */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="message">
-              Meddelande
+              Meddelande *
             </label>
             <textarea
               id="message"
@@ -152,20 +198,27 @@ const ContactPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-center sm:justify-start">
+          {/* Skickaknapp */}
+          <div className="flex flex-col gap-2">
             <button
               type="submit"
-              className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 font-sans font-light"
+              disabled={submitting}
+              className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50 font-sans font-light"
             >
-              Skicka
+              {submitting ? 'Skickar…' : 'Skicka'}
             </button>
-          </div>
 
-          {submitted && (
-            <p className="text-green-600 mt-2">
-              Tack för ditt meddelande! Vi återkommer så snart vi kan.
-            </p>
-          )}
+            {submitted && (
+              <p className="text-green-600">
+                Tack! Ditt meddelande har skickats.
+              </p>
+            )}
+            {submitError && (
+              <p className="text-red-600">
+                {submitError}
+              </p>
+            )}
+          </div>
         </form>
       </div>
     </div>
