@@ -61,8 +61,9 @@ const NavMenu: React.FC = () => {
 
       {/* Mobilmenyn */}
       {isAnimating && (
-        <div
-          className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 absolute left-0 right-0 -mx-4 top-10 z-50 transition-all duration-300 ease-in-out"
+       <div
+        className="flex flex-col items-center w-screen bg-[#F8F4EC] py-6 fixed left-0 right-0 top-[64px] z-30 transition-all duration-300 ease-in-out md:hidden"
+
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(-10px)',

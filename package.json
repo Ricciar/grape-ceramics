@@ -1,20 +1,17 @@
 {
   "name": "grape-ceramics",
   "version": "1.0.0",
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "description": "React + Vite + Netlify functions monorepo",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "client:dev": "cd client && npm run dev",
-    "build": "cd client && npm install && npm run build",
-    "deploy": "npm run build && netlify deploy --prod",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "client:dev": "npm run dev --prefix client",               
+    "build": "npm run build:server && npm run build:client",
+    "build:client": "npm ci --prefix client && npm run build --prefix client",
+    "build:server": "npm ci --prefix server && npm run build --prefix server",
+    "deploy": "npm run build && netlify deploy --prod"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/cors": "^2.8.18",

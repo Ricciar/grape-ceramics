@@ -1,39 +1,27 @@
 [build]
-base = ""
 command = "npm run build"
 publish = "client/dist"
 
 [functions]
 directory = "server/netlify/functions"
 
-# Dev-konfiguration: starta Vite i client/, proxya allt till 5173
-[dev]
-command = "npm run client:dev"
-targetPort = 5173
-port = 8888
-publish = "client"
-
-# API till Netlify Functions
-[[redirects]]
-from = "/api/courses"
-to = "/.netlify/functions/api/courses"
-status = 200
-
 [[redirects]]
 from = "/api/*"
 to = "/.netlify/functions/api"
 status = 200
 
-# Permanent redirect produkt -> kurs
 [[redirects]]
 from = "/product/:id"
 to = "/kurs/:id"
 status = 301
 force = true
 
-# Allt annat -> Vite dev (5173) under netlify dev
 [[redirects]]
 from = "/*"
-to = "http://localhost:5173/:splat"
+to = "/index.html"
 status = 200
-force = true
+
+[dev]
+command = "npm run client:dev"
+targetPort = 5173
+port = 8888
