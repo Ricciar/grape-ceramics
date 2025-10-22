@@ -7,14 +7,14 @@ import { WPPage } from "./types";
 import { Product, FeaturedProducts } from "../shopgrid/types";
 import DOMPurify from "dompurify";
 import { SkeletonMainPage } from "./SkeletonMainPage";
+import { getCached, setCached } from "../../utils/cache";
 
 const capitalizeFirstLetter = (str: string): string =>
   str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
 
 const isCourse = (p: Product): boolean =>
   (p.categories || []).some(
-    (c: any) =>
-      c.slug?.toLowerCase() === "kurser" || c.name?.toLowerCase() === "kurser"
+    (c: any) => c.slug?.toLowerCase() === "kurser" || c.name?.toLowerCase() === "kurser"
   );
 
 /** Kort (portrait 4:5) – inga meta-rader under på startsidan */
@@ -28,14 +28,13 @@ const FeaturedProductCard = ({ product }: { product: Product }) => {
   return (
     <a href={href} className="block group">
       {/* PORTRAIT 4:5 */}
-      <div
-        className="relative w-full aspect-[4/5] overflow-hidden"
-        aria-label={alt}
-      >
+      <div className="relative w-full aspect-[4/5] overflow-hidden" aria-label={alt}>
         {imageUrl && (
           <img
             src={imageUrl}
             alt={alt}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )}
@@ -83,33 +82,51 @@ const MainPage: React.FC = () => {
     const controller = new AbortController();
     let mounted = true;
 
+    const tags = [
+      "featured-one","featured-two","featured-three",
+      "featured-four","featured-five","featured-six",
+    ];
+    const keys = ["one","two","three","four","five","six"] as const;
+
+    const hydrateFrom = (allProducts: Product[]) => {
+      const next: FeaturedProducts = { one:null,two:null,three:null,four:null,five:null,six:null };
+      keys.forEach((key, i) => {
+        const prod = allProducts.find((p) => p.tags?.some((t) => t.slug === tags[i])) ?? null;
+        next[key] = prod;
+      });
+      setFeaturedProducts(next);
+    };
+
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // 1) Cache först (TTL 5 min)
+        const cHome = getCached<WPPage>("main:home", 5 * 60_000);
+        const cInfo = getCached<WPPage>("main:info", 5 * 60_000);
+        const cProds = getCached<Product[]>("main:allProducts", 5 * 60_000);
+
+        if (cHome) setHomePage(cHome);
+        if (cInfo) setInfoSection(cInfo);
+        if (cProds) hydrateFrom(cProds);
+
+        // 2) Fräscht i bakgrunden
         const [homeRes, infoRes, allProductsRes] = await Promise.all([
           axios.get(`/api/pages`, { params: { slug: "startsida" }, signal: controller.signal }),
           axios.get(`/api/pages`, { params: { slug: "info" }, signal: controller.signal }),
           axios.get(`/api/products`, { params: { per_page: 100, includeCourses: true }, signal: controller.signal }),
         ]);
-
         if (!mounted) return;
 
+        const freshHome = homeRes.data[0] ?? null;
+        const freshInfo = infoRes.data[0] ?? null;
         const allProducts: Product[] = allProductsRes.data.products || [];
-        const tags = [
-          "featured-one","featured-two","featured-three",
-          "featured-four","featured-five","featured-six",
-        ];
-        const keys = ["one","two","three","four","five","six"] as const;
-        const next: FeaturedProducts = { one:null,two:null,three:null,four:null,five:null,six:null };
 
-        keys.forEach((key, i) => {
-          const prod = allProducts.find((p) => p.tags?.some((t) => t.slug === tags[i])) ?? null;
-          next[key] = prod;
-        });
+        if (freshHome) { setHomePage(freshHome); setCached("main:home", freshHome); }
+        if (freshInfo) { setInfoSection(freshInfo); setCached("main:info", freshInfo); }
+        hydrateFrom(allProducts);
+        setCached("main:allProducts", allProducts);
 
-        if (homeRes.data.length > 0) setHomePage(homeRes.data[0]);
-        if (infoRes.data.length > 0) setInfoSection(infoRes.data[0]);
-        setFeaturedProducts(next);
       } catch (err) {
         if (!isAbort(err)) setError("Kunde inte hämta innehållet.");
       } finally {
@@ -147,6 +164,7 @@ const MainPage: React.FC = () => {
           muted
           loop
           playsInline
+          preload="metadata"
           className="w-full h-[320px] md:h-[380px] lg:h-[420px] object-cover"
         />
       )}
@@ -165,7 +183,7 @@ const MainPage: React.FC = () => {
         ))}
       </div>
 
-      {/* INFO-SEKTION – exakt bredd som grid, brödtextstil (Rubik 300) */}
+      {/* INFO-SEKTION */}
       {infoSection?.content?.rendered && (
         <section className="my-[2px] px-[2px]">
           <div

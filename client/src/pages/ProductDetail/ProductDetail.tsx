@@ -1,5 +1,5 @@
 // client/src/pages/ProductDetail/ProductDetail.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import ProductSkeleton from "./ProductSkeleton";
@@ -7,12 +7,15 @@ import Button from "../../components/Button";
 import useCart from "../../components/Cart/UseCart";
 import { Product, ProductDetailProps } from "../shopgrid/types";
 import OrderRequestModal from "./OrderRequestModal";
+import { getCached, setCached } from "../../utils/cache";
 
 interface ExtendedProductDetailProps extends ProductDetailProps {
   isCourse?: boolean;
 }
 
+const SCROLL_TOP_DELAY_MS = 0;
 const SWIPE_THRESHOLD = 50;
+const TTL_MS = 5 * 60_000; // 5 min cache
 
 /** Tunn, baseline-alignad externlänk-ikon (↗︎) */
 const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -36,6 +39,8 @@ const ExternalLinkIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }) => {
   const { id } = useParams<{ id: string }>();
+  const cacheKey = useMemo(() => (id ? `product:${id}` : ""), [id]);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -48,40 +53,59 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
   const { addToCart } = useCart();
   const [isCourse, setIsCourse] = useState(false);
 
-  /* 🔝 Scrolla alltid till toppen när vi går IN på en produkt/kurs */
+  // Scrolla alltid till toppen när vi går in på en produkt/kurs
   useEffect(() => {
-    // Körs direkt när id (routen) ändras
-    // setTimeout 0 för att låta React byta vy först
     const t = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }, 0);
+    }, SCROLL_TOP_DELAY_MS);
     return () => clearTimeout(t);
   }, [id]);
 
+  // Hämta produkt – med sessionStorage-cache (snabb first-paint), sedan uppdatera i bakgrunden
   useEffect(() => {
+    if (!id) return;
+    isMounted.current = true;
+
     const abortController = new AbortController();
 
-    const fetchProduct = async () => {
+    const run = async () => {
       try {
         setLoading(true);
         onLoadingChange?.(true);
 
+        // 1) Hydrera från cache om den finns (snabbare visning vid back/forward)
+        if (cacheKey) {
+          const cached = getCached<Product>(cacheKey, TTL_MS);
+          if (cached) {
+            setProduct(cached);
+            setCurrentImageIndex(0);
+            const hasCourseCategory = (cached.categories || []).some(
+              (cat: any) =>
+                cat.slug?.toLowerCase() === "kurser" ||
+                cat.name?.toLowerCase() === "kurser"
+            );
+            setIsCourse(hasCourseCategory);
+          }
+        }
+
+        // 2) Hämta färsk data
         const response = await axios.get(`/api/products/${id}`, {
           signal: abortController.signal,
         });
 
-        if (isMounted.current) {
-          const fetchedProduct = response.data;
-          setProduct(fetchedProduct);
-          setCurrentImageIndex(0);
+        if (!isMounted.current) return;
 
-          const hasCourseCategory = (fetchedProduct.categories || []).some(
-            (cat: any) =>
-              cat.slug?.toLowerCase() === "kurser" ||
-              cat.name?.toLowerCase() === "kurser"
-          );
-          setIsCourse(hasCourseCategory);
-        }
+        const fetchedProduct = response.data as Product;
+        setProduct(fetchedProduct);
+        setCached(cacheKey, fetchedProduct);
+        setCurrentImageIndex(0);
+
+        const hasCourseCategory = (fetchedProduct.categories || []).some(
+          (cat: any) =>
+            cat.slug?.toLowerCase() === "kurser" ||
+            cat.name?.toLowerCase() === "kurser"
+        );
+        setIsCourse(hasCourseCategory);
       } catch (err) {
         if (!axios.isCancel(err) && isMounted.current) setError(true);
       } finally {
@@ -92,14 +116,15 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
       }
     };
 
-    if (id) fetchProduct();
+    run();
 
     return () => {
       isMounted.current = false;
       abortController.abort("Component unmounted");
     };
-  }, [id, onLoadingChange]);
+  }, [id, onLoadingChange, cacheKey]);
 
+  // Dokumenttitel
   useEffect(() => {
     if (product?.name) document.title = `${product.name} | Grape Ceramics`;
     return () => {
@@ -107,40 +132,42 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
     };
   }, [product]);
 
-  if (loading || !product) return <ProductSkeleton />;
-  if (error) return <p>Error fetching product</p>;
+  // Bildnavigering
+  const multipleImages = !!product?.images && product.images.length > 1;
 
-  const hasImages = product.images && product.images.length > 0;
-  const multipleImages = hasImages && product.images.length > 1;
-
-  const nextImage = () => {
-    if (!multipleImages) return;
+  const nextImage = useCallback(() => {
+    if (!product?.images || !multipleImages) return;
     setCurrentImageIndex((prev) =>
       prev === product.images.length - 1 ? 0 : prev + 1
     );
-  };
+  }, [product?.images, multipleImages]);
 
-  const prevImage = () => {
-    if (!multipleImages) return;
+  const prevImage = useCallback(() => {
+    if (!product?.images || !multipleImages) return;
     setCurrentImageIndex((prev) =>
       prev === 0 ? product.images.length - 1 : prev - 1
     );
-  };
+  }, [product?.images, multipleImages]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-  };
+  }, []);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!multipleImages || touchStartX.current === null) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    if (deltaX > SWIPE_THRESHOLD) prevImage();
-    else if (deltaX < -SWIPE_THRESHOLD) nextImage();
-    touchStartX.current = null;
-  };
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!multipleImages || touchStartX.current === null) return;
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      if (deltaX > SWIPE_THRESHOLD) prevImage();
+      else if (deltaX < -SWIPE_THRESHOLD) nextImage();
+      touchStartX.current = null;
+    },
+    [multipleImages, nextImage, prevImage]
+  );
 
-  // ------- Lager-rad (kurs vs produkt) -------
-  const renderStockRow = () => {
+  // Lager-rad (kurs vs produkt)
+  const renderStockRow = useCallback(() => {
+    if (!product) return null;
+
     if (isCourse) {
       if (product.stock_status === "outofstock") {
         return (
@@ -172,7 +199,14 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
         <span className="ml-2 w-3 h-3 bg-[#C65757] rounded-full" />
       </div>
     );
-  };
+  }, [product, isCourse]);
+
+  // Early returns
+  if (loading && !product) return <ProductSkeleton />;
+  if (error) return <p>Error fetching product</p>;
+  if (!product) return <ProductSkeleton />;
+
+  const hasImages = product.images && product.images.length > 0;
 
   return (
     <div className="p-[1px] max-w-6xl mx-auto px-[2px] mb-10">
@@ -200,28 +234,29 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                 <img
                   src={product.images[currentImageIndex].src}
                   alt={product.images[currentImageIndex].alt || product.name}
+                  loading="eager"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
 
                 {multipleImages && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
-                    aria-label="Föregående bild"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
-                    aria-label="Nästa bild"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
-
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
+                      aria-label="Föregående bild"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80 hover:opacity-100"
+                      aria-label="Nästa bild"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
               </div>
 
               {product.images.length > 1 && (
@@ -231,11 +266,11 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                       key={idx}
                       src={img.src}
                       alt={img.alt || `Image ${idx + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       onClick={() => setCurrentImageIndex(idx)}
                       className={`w-20 h-20 object-cover cursor-pointer border ${
-                        currentImageIndex === idx
-                          ? "border-gray-600"
-                          : "border-transparent"
+                        currentImageIndex === idx ? "border-gray-600" : "border-transparent"
                       }`}
                     />
                   ))}
@@ -303,9 +338,7 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
                 aria-label="Boka här (öppnas i ny flik)"
               >
                 <span className="align-middle">BOKA HÄR</span>
-                <ExternalLinkIcon
-                  className="w-[16px] h-[16px] align-middle relative top-[-3px]"
-                />
+                <ExternalLinkIcon className="w-[16px] h-[16px] align-middle relative top-[-3px]" />
               </button>
             )
           ) : (
@@ -354,4 +387,4 @@ const ProductDetail: React.FC<ExtendedProductDetailProps> = ({ onLoadingChange }
   );
 };
 
-export default ProductDetail;
+export default React.memo(ProductDetail);

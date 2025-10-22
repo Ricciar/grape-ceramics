@@ -1,9 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { ProductCardProps } from './types';
 
 const SWIPE_THRESHOLD = 50; // px
 
-// Chevron som matchar bilden du skickade
 const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
@@ -15,6 +14,20 @@ const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
     />
   </svg>
 );
+
+// Hjälp: responsive sizes för 2-kol mobil och 3-kol desktop, max container ~ 1152px (6xl)
+const IMG_SIZES =
+  '(min-width:1024px) calc((min(1152px, 100vw) - 2px) / 3), ' + // desktop: 3 kol
+  'calc((100vw - 2px) / 2)';                                     // mobil: 2 kol
+
+// Antagen renderbredd/höjd (för att undvika CLS), matchar 4:5-aspekt
+const PLACEHOLDER_WIDTH_DESKTOP = 384;  // ~ 1152px / 3
+const PLACEHOLDER_WIDTH_MOBILE  = 360;  // typisk mobilbredd/2
+const WIDTH_ATTR =  // använd ett rimligt snitt; påverkar inte layouten visuellt
+  typeof window !== 'undefined' && window.innerWidth >= 1024
+    ? PLACEHOLDER_WIDTH_DESKTOP
+    : PLACEHOLDER_WIDTH_MOBILE;
+const HEIGHT_ATTR = Math.round(WIDTH_ATTR * 5 / 4);
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -31,12 +44,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) =>
     return Math.round(num).toString();
   };
 
-  // Swipe (mobil)
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-  };
+  }, []);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!images.length || touchStartX.current === null) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     if (deltaX > SWIPE_THRESHOLD) {
@@ -45,22 +57,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) =>
       setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     }
     touchStartX.current = null;
-  };
+  }, [images.length]);
 
-  // Desktop-pilar
-  const nextImage = (e: React.MouseEvent) => {
+  const nextImage = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!images.length) return;
     setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  }, [images.length]);
 
-  const prevImage = (e: React.MouseEvent) => {
+  const prevImage = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!images.length) return;
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
+  }, [images.length]);
 
   const mobileLayout = index % 5 === 4 ? 'col-span-2' : 'col-span-1';
+
+  // Första ~12 korten prioriteras, resten lågt
+  const fetchPriority = index < 12 ? 'high' as const : 'low' as const;
 
   return (
     <div
@@ -75,14 +89,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) =>
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={mainImage}
-          alt={product.images?.[0]?.alt || product.name}
-          loading="lazy"
-          className="w-full h-full object-cover transition duration-300"
-        />
+        {mainImage && (
+          <img
+            src={mainImage}
+            alt={product.images?.[0]?.alt || product.name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority={fetchPriority}
+            sizes={IMG_SIZES}
+            width={WIDTH_ATTR}
+            height={HEIGHT_ATTR}
+            className="w-full h-full object-cover transition duration-300"
+          />
+        )}
 
-        {/* Desktop: chevronpilar visas vid hover, om fler än 1 bild */}
         {images.length > 1 && (
           <>
             <button
@@ -133,4 +153,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onClick }) =>
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

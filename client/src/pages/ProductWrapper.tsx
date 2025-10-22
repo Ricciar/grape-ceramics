@@ -9,4 +9,4 @@ const ProductWrapper: React.FC = () => {
   );
 };
 
-export default ProductWrapper;
+export default React.memo(ProductWrapper);

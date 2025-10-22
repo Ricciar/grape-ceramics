@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Category, FilterMenuProps } from './types';
 import CategoryList from './CatergoryList';
 import CategorySkeleton from './CategorySkeleton';
@@ -30,127 +30,70 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       setLoading(false);
     }
   }, [products, extractCategories]);
-  // Ladda tidigare valda kategorier från localStorage när komponenten monteras
+
   useEffect(() => {
-    // Ladda sparade kategorival från localStorage
     try {
       const savedCategories = localStorage.getItem('selectedCategories');
-      if (savedCategories) {
-        setSelectedCategories(JSON.parse(savedCategories));
-      }
-    } catch (error) {
-      console.error('Fel vid laddning av sparade kategorier:', error);
-      // Vid fel, fortsätt utan sparade kategorier
-    }
+      if (savedCategories) setSelectedCategories(JSON.parse(savedCategories));
+    } catch {}
   }, []);
 
-  // Memoizera filtrerade produkter för prestandaoptimering
-  console.log('Filtrerar produkter...');
-  console.log('produkter:', products);
-  console.log('valda kategorier:', selectedCategories);
   const filteredProducts = useMemo(() => {
     if (products && selectedCategories.length > 0) {
-      // Filtrera produkter baserat på valda kategori-IDs
-      // En produkt visas om den tillhör NÅGON av de valda kategorierna
       return products.filter(
         (product) =>
           product.categories &&
           product.categories.some((cat) => selectedCategories.includes(cat.id))
       );
-    } else {
-      // Om inga kategorier är valda, visa alla produkter
-      return products;
     }
+    return products;
   }, [products, selectedCategories]);
 
-  // Beräkna antalet produkter som kommer att visas (också memoizerad)
   const filteredProductsCount = filteredProducts.length;
 
-  // Beräkna antalet produkter per kategori (för att visa i gränssnittet)
   const productCountByCategory = useMemo(() => {
     const countMap: Record<number, number> = {};
-
-    // Om inga produkter finns, returnera en tom map
     if (!products || products.length === 0) return countMap;
-
-    // För varje produkt, räkna den till varje kategori den tillhör
     products.forEach((product) => {
-      if (product.categories) {
-        product.categories.forEach((category) => {
-          if (!countMap[category.id]) {
-            countMap[category.id] = 0;
-          }
-          countMap[category.id]++;
-        });
-      }
+      product.categories?.forEach((category) => {
+        if (!countMap[category.id]) countMap[category.id] = 0;
+        countMap[category.id]++;
+      });
     });
-
     return countMap;
   }, [products]);
 
-  // Funktion för att hantera kategori-klick
-  const handleCategoryClick = (categoryName: string) => {
-    const selectedCategory = categories.find(
-      (cat) => cat.name === categoryName
+  const handleCategoryClick = useCallback((categoryName: string) => {
+    const selectedCategory = categories.find((cat) => cat.name === categoryName);
+    if (!selectedCategory) return;
+    setSelectedCategories((prevSelected) =>
+      prevSelected.includes(selectedCategory.id)
+        ? prevSelected.filter((id) => id !== selectedCategory.id)
+        : [...prevSelected, selectedCategory.id]
     );
+  }, [categories]);
 
-    if (selectedCategory) {
-      setSelectedCategories((prevSelected) => {
-        if (prevSelected.includes(selectedCategory.id)) {
-          return prevSelected.filter((id) => id !== selectedCategory.id);
-        } else {
-          return [...prevSelected, selectedCategory.id];
-        }
-      });
-    }
-  };
+  const applyFilters = useCallback(() => {
+    onFilterProducts?.(filteredProducts);
+    try {
+      localStorage.setItem('selectedCategories', JSON.stringify(selectedCategories));
+    } catch {}
+    onClose?.();
+  }, [filteredProducts, onFilterProducts, selectedCategories, onClose]);
 
-  // Funktion för att tillämpa filter när "Visa produkter" klickas
-  const applyFilters = () => {
-    // Skicka filtrerade produkter till förälder
-    if (onFilterProducts) {
-      onFilterProducts(filteredProducts);
-    }
-
-    // Spara valda kategorier i localStorage för att bevara dem mellan sessioner
-    localStorage.setItem(
-      'selectedCategories',
-      JSON.stringify(selectedCategories)
-    );
-
-    // Stäng filtermenyn
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  // Funktion för att rensa alla filter
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedCategories([]);
-  };
+  }, []);
 
-  // Hantera öppning och stängning av filtermenyn
   useEffect(() => {
     if (isOpen) {
-      // Steg 1: Visa elementet
       setIsAnimating(true);
       setIsVisible(false);
-
-      // Steg 2: Kort fördröjning för att säkerställa att DOM har uppdaterats
-      const showTimer = setTimeout(() => {
-        setIsVisible(true);
-      }, 10);
-
+      const showTimer = setTimeout(() => setIsVisible(true), 10);
       return () => clearTimeout(showTimer);
     } else if (isAnimating) {
-      // Steg 1: Starta utgångsanimation
       setIsVisible(false);
-
-      // Steg 2: Vänta tills animationen är klar
-      const hideTimer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 600);
-
+      const hideTimer = setTimeout(() => setIsAnimating(false), 600);
       return () => clearTimeout(hideTimer);
     }
   }, [isOpen, isAnimating]);
@@ -164,7 +107,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       aria-modal="true"
       aria-labelledby="filter-title"
     >
-      {/* Bakgrundsöverlappning */}
+      {/* Bakgrund */}
       <div
         className="fixed inset-0 bg-black transition-opacity duration-300 ease-in-out"
         style={{ opacity: isVisible ? 0.5 : 0 }}
@@ -173,7 +116,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
         role="presentation"
       ></div>
 
-      {/* Filtermenyn */}
+      {/* Panel */}
       <div
         className="relative w-full bg-white shadow-lg transform"
         style={{
@@ -191,28 +134,18 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
         </div>
 
         {/* Innehåll */}
-        <div
-          className="p-4 overflow-y-auto"
-          style={{ maxHeight: 'calc(85vh - 40px)' }}
-        >
+        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 40px)' }}>
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
-            <h2
-              id="filter-title"
-              className="text-lg font-light tracking-[2.85px]"
-            >
+            <h2 id="filter-title" className="text-lg font-light tracking-[2.85px]">
               FILTER
             </h2>
-            <button
-              className="p-2 text-2xl"
-              onClick={onClose}
-              aria-label="Stäng filtermenyn"
-            >
+            <button className="p-2 text-2xl" onClick={onClose} aria-label="Stäng filtermenyn">
               ×
             </button>
           </div>
 
-          {/* Filterkategorier med skeleton loader */}
+          {/* Kategorier */}
           {loading ? (
             <CategorySkeleton count={categories.length || 3} />
           ) : (
@@ -224,7 +157,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             />
           )}
 
-          {/* Knappar för att hantera filter */}
+          {/* Knappar */}
           <div className="mt-6 flex flex-col gap-3">
             {selectedCategories.length > 0 && (
               <button
@@ -252,4 +185,4 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   );
 };
 
-export default FilterMenu;
+export default React.memo(FilterMenu);

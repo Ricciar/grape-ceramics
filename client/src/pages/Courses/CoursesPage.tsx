@@ -3,6 +3,7 @@ import axios from "axios";
 import DOMPurify from "dompurify";
 import { Product } from "../shopgrid/types";
 import { Link } from "react-router-dom";
+import { getCached, setCached } from "../../utils/cache";
 
 const SCROLL_KEY = "scroll:courses";
 
@@ -40,6 +41,8 @@ const CourseProductCard = ({
           <img
             src={imageUrl}
             alt={alt}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -107,9 +110,15 @@ const CoursesPage: React.FC = () => {
     const fetchCourseProducts = async () => {
       try {
         setLoading(true);
+
+        // cache först (5 min)
+        const cached = getCached<Product[]>("courses:list", 5 * 60_000);
+        if (cached) setCourseProducts(cached);
+
         const response = await axios.get("/api/courses", { params: { per_page: 100 } });
         const onlyCourses: Product[] = response.data.products || [];
         setCourseProducts(onlyCourses);
+        setCached("courses:list", onlyCourses);
       } catch (err) {
         console.error("Fel vid hämtning av kurser:", err);
         setError("Det gick inte att hämta kurserna.");
@@ -139,7 +148,7 @@ const CoursesPage: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (loading && courseProducts.length === 0) {
     return <p className="text-center p-8">Laddar kurser...</p>;
   }
 

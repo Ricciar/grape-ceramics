@@ -8,6 +8,7 @@ import DesktopProductCard from './DesktopProductCard';
 import SkeletonProductCard from './SkeletonProductCard';
 import SkeletonDesktopProductCard from './SkeletonDesktopProductCard';
 import filtericon from '../../assets/filtericon.svg';
+import { getCached, setCached } from '../../utils/cache';
 
 const SCROLL_KEY = 'scroll:shop';
 
@@ -24,30 +25,32 @@ const ShopGrid1: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
+        // cache först (5 min)
+        const cached = getCached<Product[]>('shop:all', 5 * 60_000);
+        if (cached) {
+          setProducts(cached);
+          setFilteredProducts(cached);
+        }
+
         let allProducts: Product[] = [];
         let currentPage = 1;
         let totalPagesFetched = 1;
 
         do {
-          const response = await axios.get(
-            `/api/products?page=${currentPage}&per_page=${perPage}`
-          );
-
+          const response = await axios.get(`/api/products?page=${currentPage}&per_page=${perPage}`);
           const productsFromPage: Product[] = response.data.products || [];
-          allProducts = [...allProducts, ...productsFromPage];
-
+          allProducts = allProducts.concat(productsFromPage);
           totalPagesFetched = response.data.totalPages || 1;
           currentPage++;
         } while (currentPage <= totalPagesFetched);
 
         setProducts(allProducts);
         setFilteredProducts(allProducts);
+        setCached('shop:all', allProducts);
       } catch (error) {
         console.error('Fel vid hämtning av produkter: ', error);
       } finally {
         setLoading(false);
-
-        // Återställ scroll om vi har en sparad position
         const saved = sessionStorage.getItem(SCROLL_KEY);
         if (saved) {
           const y = Number(saved);
@@ -63,7 +66,6 @@ const ShopGrid1: React.FC = () => {
   }, []);
 
   const navigateToProduct = (productId: number) => {
-    // Spara nuvarande scroll
     sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
     navigate(`/product/${productId}`);
   };

@@ -29,14 +29,8 @@ for = "/*"
   [headers.values]
   Cache-Control = "public, max-age=60, must-revalidate"
 
-# === Bara i production: SPA-fallback ===
-[context.production]
-  [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[dev]
-command = "npm run client:dev"
-targetPort = 5173
-port = 8888
+# SPA-fallback (måste ligga sist)
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

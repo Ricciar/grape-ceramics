@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { DesktopProductCardProps } from './types';
 import { capitalizeFirstLetter } from './ProductLayoutUtils';
 
-// Chevron som matchar bilden du skickade
 const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
@@ -15,6 +14,13 @@ const Chevron = ({ dir = 'left' }: { dir?: 'left' | 'right' }) => (
   </svg>
 );
 
+const IMG_SIZES =
+  '(min-width:1024px) calc((min(1152px, 100vw) - 2px) / 3), ' + // desktop: 3 kol
+  'calc((100vw - 2px) / 2)';                                     // fallback
+
+const WIDTH_ATTR = 384;                 // ~ kolumnbredd desktop
+const HEIGHT_ATTR = Math.round(384 * 5/4); // 4:5
+
 const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -22,15 +28,15 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
     return null;
   }
 
-  const nextImage = (e: React.MouseEvent) => {
+  const nextImage = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex((prev) => (prev + 1) % product.images.length);
-  };
+  }, [product.images.length]);
 
-  const prevImage = (e: React.MouseEvent) => {
+  const prevImage = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
-  };
+  }, [product.images.length]);
 
   const formatPrice = (price: string | null): string => {
     if (!price) return '0';
@@ -38,6 +44,9 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
     if (isNaN(num)) return price;
     return Math.round(num).toString();
   };
+
+  // Endast första raderna får high-priority; här håller vi allt low
+  const fetchPriority = 'low' as const;
 
   return (
     <div className="cursor-pointer group relative" onClick={() => onClick(product.id)}>
@@ -47,10 +56,14 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
           src={product.images[currentIndex].src}
           alt={product.images[currentIndex].alt || product.name}
           loading="lazy"
+          decoding="async"
+          fetchPriority={fetchPriority}
+          sizes={IMG_SIZES}
+          width={WIDTH_ATTR}
+          height={HEIGHT_ATTR}
           className="w-full h-full object-cover"
         />
 
-        {/* Chevronpilar (bara om fler än 1 bild) */}
         {product.images.length > 1 && (
           <>
             <button
@@ -97,4 +110,4 @@ const DesktopProductCard: React.FC<DesktopProductCardProps> = ({ product, onClic
   );
 };
 
-export default DesktopProductCard;
+export default React.memo(DesktopProductCard);
